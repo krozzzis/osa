@@ -57,6 +57,26 @@ delib.module {
         settings = lib.mkForce null;
       };
 
+      home.activation.fixCodexConfig = hm.dag.entryBefore [ "linkGeneration" ] ''
+        for p in "$HOME/.codex/config.toml" "$HOME/.config/codex/config.toml"; do
+          if [ -L "$p" ]; then
+            target=$(readlink "$p")
+            case "$target" in
+              /nix/store/*)
+                rm -f "$p"
+                mkdir -p "$(dirname "$p")"
+                if [ ! -f "$p" ]; then
+                  cat > "$p" <<'EOF'
+[mcp_servers]
+EOF
+                  chmod 600 "$p"
+                fi
+                ;;
+            esac
+          fi
+        done
+      '';
+
       home.activation.codexMcp = hm.dag.entryAfter [ "writeBoundary" ] (
         lib.concatStringsSep "\n" mcpAddCommands
       );
