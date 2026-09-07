@@ -23,8 +23,7 @@ delib.module {
       interval = "monthly";
     };
 
-    services.journald.extraConfig = lib.mkIf (lib.versionOlder (lib.version or "0") "25.11") "Storage=volatile";
-    services.journald.settings.Journal.Storage = lib.mkIf (lib.versionAtLeast (lib.version or "25.11") "25.11") "volatile";
+    services.journald.settings.Journal.Storage = "volatile";
 
     systemd.settings.Manager.DefaultTimeoutStopSec = "10s";
 

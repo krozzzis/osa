@@ -41,8 +41,7 @@ delib.module {
     powerManagement.enable = true;
     services.power-profiles-daemon.enable = true;
 
-    # Keep journal of the frozen session
-    services.journald.extraConfig = "SyncIntervalSec=5s";
+    services.journald.settings.Journal.SyncIntervalSec = "5s";
 
     # s2idle on this hardware needs PSR disabled or resume freezes
     boot.kernelParams = lib.optionals (cfg.resumeOffset != null) [

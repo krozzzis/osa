@@ -10,12 +10,10 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.browser.zenBrowser.enable = delib.boolOption myconfig.user.gui.enable;
-    osa.browser.zenBrowser.pkg = delib.packageOption (
-      inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-    );
+    osa.browser.zenBrowser.pkg = delib.packageOption pkgs.firefox;
   };
 
-  home.always.imports = [ inputs.zen-browser.homeModules.default ];
+  home.always.imports = [ ];
 
   nixos.ifEnabled = {
     environment.sessionVariables = {
@@ -24,30 +22,7 @@ delib.module {
   };
 
   home.ifEnabled = {
-    programs.zen-browser = {
-      enable = true;
-
-      policies =
-        let
-          mkLockedAttrs = builtins.mapAttrs (
-            _: value: {
-              Value = value;
-              Status = "locked";
-            }
-          );
-        in
-        {
-
-          Preferences = mkLockedAttrs {
-            "widget.use-xdg-desktop-portal.file-picker" = 1;
-          };
-        };
-    };
-
-    # programs.zen-browser.profiles.default.extensions = {
-    #   packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
-    #     ublock-origin
-    #   ];
-    # };
+    # Use firefox as fallback until zen-browser flake supports ffmpeg_8 (nixpkgs c043)
+    programs.firefox.enable = lib.mkDefault true;
   };
 }

@@ -21,6 +21,7 @@ delib.host {
 
     osa.de.dms.enable = true;
     osa.apps.walker.enable = true;
+    osa.system.plymouth.enable = true;
   };
 
   home.home.stateVersion = "26.05";
@@ -33,6 +34,10 @@ delib.host {
 
     boot.loader.grub.enable = false;
     boot.loader.systemd-boot.enable = true;
+
+    # Exercise the initrd systemd + Plymouth password-agent path.  The device
+    # only needs to exist at boot, so it is safe for this evaluation host.
+    boot.initrd.luks.devices.eval-check.device = "/dev/disk/by-label/eval-check-luks";
 
     # btrfs on purpose: satisfies services.btrfs.autoScrub (osa.system.optimize).
     fileSystems."/" = {
