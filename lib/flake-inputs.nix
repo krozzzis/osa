@@ -11,9 +11,18 @@
 rec {
   findPaths =
     dirs:
-    lib.filter (path: baseNameOf path == "inputs.nix") (
-      lib.concatMap lib.filesystem.listFilesRecursive dirs
-    );
+    let
+      listFilesRecursive = dir:
+        let
+          entries = builtins.readDir dir;
+          files = lib.mapAttrsToList (name: type:
+            let p = dir + "/${name}"; in
+            if type == "directory" then listFilesRecursive p
+            else if name == "inputs.nix" then [ p ]
+            else [ ]
+          ) entries;
+        in lib.concatLists files;
+    in lib.filter (path: baseNameOf path == "inputs.nix") (lib.concatMap listFilesRecursive dirs);
 
   importModules = dirs: map (path: import path) (findPaths dirs);
 }

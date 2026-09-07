@@ -23,7 +23,7 @@ delib.module {
       interval = "monthly";
     };
 
-    services.journald.extraConfig = "Storage=volatile";
+    services.journald.settings.Journal.Storage = "volatile";
 
     systemd.settings.Manager.DefaultTimeoutStopSec = "10s";
 
