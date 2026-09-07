@@ -2,6 +2,7 @@
   delib,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 delib.module {
@@ -20,37 +21,44 @@ delib.module {
   home.ifEnabled =
     { cfg, myconfig, ... }:
     let
+      codexBin = lib.getExe cfg.pkg;
+      hm = inputs.home-manager.lib.hm;
+
       enabledLsp = lib.filterAttrs (
         _name: server: server.enable && server.package != null
       ) myconfig.user.dev.lsp;
       enabledMcp = lib.filterAttrs (_name: server: server.enable) myconfig.user.dev.mcp;
 
-      mkMcpServer =
-        _name: server:
+      mkMcpAdd =
+        name: server:
         if server.type == "local" then
-          {
-            command = builtins.head server.command;
-            args = builtins.tail server.command;
-            enabled = true;
-          }
+          ''
+            ${codexBin} mcp remove ${name} >/dev/null 2>&1 || true
+            ${codexBin} mcp add ${name} -- ${lib.escapeShellArgs server.command}
+          ''
         else
-          {
-            inherit (server) url;
-            enabled = true;
-          };
+          ''
+            ${codexBin} mcp remove ${name} >/dev/null 2>&1 || true
+            ${codexBin} mcp add ${name} --url ${server.url}
+          '';
 
-      mcpServers = lib.mapAttrs mkMcpServer enabledMcp;
-      settings = lib.recursiveUpdate cfg.settings {
-        mcp_servers = (cfg.settings.mcp_servers or { }) // mcpServers;
-      };
+      mcpAddCommands = lib.mapAttrsToList mkMcpAdd enabledMcp;
     in
     {
       home.packages = lib.mapAttrsToList (_name: server: server.package) enabledLsp;
 
+      # Don't manage config.toml via home-manager — it creates a read-only
+      # symlink to the Nix store, which prevents codex from persisting trust
+      # and other runtime settings.  MCP servers are configured via CLI
+      # in activation scripts instead (same pattern as claude-code.nix).
       programs.codex = {
         enable = true;
         package = cfg.pkg;
-        inherit settings;
+        settings = lib.mkForce null;
       };
+
+      home.activation.codexMcp = hm.dag.entryAfter [ "writeBoundary" ] (
+        lib.concatStringsSep "\n" mcpAddCommands
+      );
     };
 }
