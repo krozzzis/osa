@@ -38,18 +38,22 @@ delib.module {
 
   nixos.ifEnabled = {
     programs.niri.enable = true;
-    # niri-unstable's `niri-session` wrapper calls `systemctl --user
-    # import-environment` with no variable list, which systemd now warns
-    # is deprecated ("Calling import-environment without a list of
-    # variable names is deprecated"). That warning gets printed straight
-    # to the VT during the greeter -> session handoff. Patch it to pass
-    # the same explicit list niri's own `--session` mode uses internally.
+    # greetd starts niri-session before a Wayland socket exists. Importing a
+    # fixed list then makes systemctl print "$WAYLAND_DISPLAY not set" to the
+    # VT, which becomes visible during the greeter -> session handoff. Import
+    # only variables that actually exist in the login environment.
     programs.niri.package = pkgs.niri-unstable.overrideAttrs (old: {
       postFixup = (old.postFixup or "") + ''
         substituteInPlace $out/bin/niri-session \
           --replace-fail \
             'systemctl --user import-environment' \
-            'systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET'
+            'niri_environment=
+            [ -z "''${WAYLAND_DISPLAY-}" ] || niri_environment="$niri_environment WAYLAND_DISPLAY"
+            [ -z "''${DISPLAY-}" ] || niri_environment="$niri_environment DISPLAY"
+            [ -z "''${XDG_SESSION_TYPE-}" ] || niri_environment="$niri_environment XDG_SESSION_TYPE"
+            [ -z "''${XDG_CURRENT_DESKTOP-}" ] || niri_environment="$niri_environment XDG_CURRENT_DESKTOP"
+            [ -z "''${NIRI_SOCKET-}" ] || niri_environment="$niri_environment NIRI_SOCKET"
+            [ -z "$niri_environment" ] || systemctl --user import-environment $niri_environment'
       '';
     });
 
