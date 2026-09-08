@@ -1,7 +1,7 @@
 # DO-NOT-EDIT. This file was auto-generated using github:vic/flake-file.
 # Use `nix run .#write-flake` to regenerate it.
 {
-  description = "OSA -- reusable denix module library for NixOS + home-manager. hosts/ and user identity live in separate flakes (osa-host, osa-user) that depend on this one.";
+  description = "OSA -- reusable denix module library and user-facing interface contract for NixOS + home-manager.";
 
   outputs =
     inputs:
@@ -68,7 +68,10 @@
   inputs = {
     caelestia-shell = {
       url = "github:caelestia-dots/shell";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        quickshell.follows = "quickshell";
+      };
     };
     denix = {
       url = "github:yunfachi/denix";
@@ -110,6 +113,10 @@
     };
     plymouth-theme-material = {
       url = "github:krozzzis/plymouth-theme-material";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rip = {

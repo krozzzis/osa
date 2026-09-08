@@ -5,12 +5,10 @@ NixOS + home-manager. This flake has no hosts, no user identity, and no
 `nixosConfigurations` of its own — it's just `modules/`, meant to be
 imported by whatever flake actually builds a machine.
 
-Personal configuration built on top of OSA lives in separate,
-private-by-default flakes:
-
-- [osa-krozzzis](https://github.com/krozzzis/osa-krozzzis) — krozzzis's
-  identity, desktop/server profiles, and rice (DE) presets.
-- osa-hosts — krozzzis's actual machine configurations (private).
+The complete personal configuration lives in
+[osa-krozzzis](https://github.com/krozzzis/osa-krozzzis): identity, profiles,
+rice presets, cosmetic DMS presets and hosts. Its public composition function also lets
+another flake extend or independently replace the personal and host layers.
 
 This split is deliberate: `osa` is the reusable part anyone can depend on;
 everything person- or machine-specific lives downstream.
@@ -24,7 +22,7 @@ Modules are grouped by category under `modules/osa/`:
 | `ai/`          | AI coding assistants (claude-code, codex, opencode) |
 | `apps/`        | misc applications                            |
 | `browser/`     | firefox, librewolf, zen-browser, tor         |
-| `de/`          | desktop environments (niri, hyprland, xfce, caelestia) + their shells (dms) |
+| `de/`          | desktop environments plus base DMS/system integration |
 | `dev/`         | LSP and MCP server definitions               |
 | `editor/`      | nixvim, vim, zed                             |
 | `fileManager/` | nautilus                                     |
@@ -138,17 +136,18 @@ selects a single authoritative `material` package.
 
 ### Module flake inputs
 
-Some modules need their own flake inputs (niri, dms, walker, nixvim, ...);
+Some modules need their own flake inputs (niri, DMS, walker, nixvim, ...);
 each declares them in a sibling `inputs.nix` inside `${osa}/modules`. Your
 flake should collect those too, using the same scanner osa itself uses
-(`lib/flake-inputs.nix`) — see how [osa-host](https://github.com/krozzzis/osa-host)
-does it: filter each input root once (dropping `inputs.nix` files so denix
+(`lib/flake-inputs.nix`) — see how
+[osa-krozzzis](https://github.com/krozzzis/osa-krozzzis) does it: filter each
+input root once (dropping `inputs.nix` files so denix
 never imports them), then pass every collected input through to denix via
 `specialArgs.inputs`.
 
 See [osa-krozzzis](https://github.com/krozzzis/osa-krozzzis) for a real
-identity/rice layer built this way, and its README for how to wire user
-profiles and rices on top of `osa` modules, or `AGENTS.md` in this repo
+identity/rice/host layer built this way, and its README for how to extend it
+with additional user modules and hosts, or `AGENTS.md` in this repo
 for the full module-authoring reference (how `delib.module`,
 `nixos.ifEnabled`/`home.ifEnabled`, and cross-module options work).
 

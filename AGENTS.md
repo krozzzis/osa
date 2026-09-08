@@ -2,11 +2,12 @@
 
 **OSA** — переиспользуемая библиотека denix-модулей для NixOS + home-manager.
 Это НЕ конфигурация машины: здесь нет `hosts/`, `rices/`, пользователя и
-`nixosConfigurations`. Всё персональное/машинное живёт в даунстрим-флейках:
+`nixosConfigurations`. Всё персональное/машинное живёт в composable
+даунстрим-флейке:
 
 ```
-osa (этот репо)  →  osa-krozzzis (~/osa-user)  →  osa-host (~/osa-host)
-модули + интерфейс   личность, rices, дотфайлы    реальные машины
+osa (этот репо)  →  osa-krozzzis (~/osa-user)
+модули + интерфейс   личность, косметика, rices, дотфайлы + hosts
 ```
 
 ---
@@ -52,7 +53,7 @@ nix run .#write-flake
 ## Интерфейсный контракт `user.*`
 
 `modules/osa/user/default.nix` объявляет опции, которые читают модули osa.
-Даунстрим (osa-user/хосты) **только проставляет значения**, ничего не
+Даунстрим (osa-krozzzis/другие host-флейки) **только проставляет значения**, ничего не
 объявляет:
 
 | Опция | Тип | Default | Кто заполняет |
@@ -114,6 +115,16 @@ Home Manager обычно создаёт config-файл как read-only symlin
 отдельно отслеживает MCP-серверы, которыми управляет OSA. Не возвращай Codex к
 прямому `programs.codex.settings`, иначе сохранение trust снова сломается.
 
+### Граница DMS
+
+В `osa.de.dms` живут пакет и inputs DMS, greeter, системные/Niri-интеграции,
+power behavior, plugins, default wallpapers, mutable runtime-механика
+`settings.json` и базовые значения, вычисляемые из глобальных
+`osa.ui.*`/`user.fonts.*`. Персональный
+downstream может дополнять `osa.de.dms.settings` только косметическими
+пресетами (bar, widgets, control center, раскладка элементов). Не переноси
+greeter или системные зависимости DMS в персональный репозиторий.
+
 ### Plymouth
 
 `osa.system.plymouth` использует готовый пакет из input
@@ -150,12 +161,13 @@ nix run .#write-flake
 ```
 
 `check/` виден только внутри этого флейка — даунстрим сканирует только
-`${osa}/modules`. Реальную сборку машин проверяем в `~/osa-host`:
+`${osa}/modules`. Реальную сборку машин проверяем в объединённом
+`~/osa-user` (репозиторий `osa-krozzzis`):
 
 ```bash
-cd ~/osa-host
+cd ~/osa-user
 nix eval .#nixosConfigurations.nixlaptop.config.system.build.toplevel.drvPath \
-  --override-input osa ~/osa --override-input osa-user ~/osa-user
+  --override-input osa ~/osa
 ```
 
 ## Как добавить модуль

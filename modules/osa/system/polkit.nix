@@ -7,7 +7,12 @@
 delib.module {
   name = "osa.system.polkit";
 
-  options = delib.singleEnableOption true;
+  options = {
+    osa.system.polkit = {
+      enable = delib.boolOption true;
+      agent.enable = delib.boolOption true;
+    };
+  };
 
   nixos.ifEnabled = { myconfig, ... }: {
     security.polkit.enable = true;
@@ -29,11 +34,8 @@ delib.module {
       });
     '';
 
-    # DMS (dank-material-shell) ships its own polkit auth UI baked into the
-    # shell process, so starting the plain GNOME agent alongside it just
-    # races two agents for the same D-Bus name and shows the uglier one.
     systemd.user.services.polkit-gnome-authentication-agent-1 =
-      lib.mkIf (!(myconfig.osa.de.dms.enable or false))
+      lib.mkIf myconfig.osa.system.polkit.agent.enable
         {
           description = "PolicyKit Authentication Agent";
           wantedBy = [ "graphical-session.target" ];

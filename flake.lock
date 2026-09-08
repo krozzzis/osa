@@ -31,7 +31,9 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "quickshell": "quickshell"
+        "quickshell": [
+          "quickshell"
+        ]
       },
       "locked": {
         "lastModified": 1788804602,
@@ -119,11 +121,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788802123,
-        "narHash": "sha256-RXaZENPMZ5NJ15EiyheNiEZ7QtjxTJaoJqo6K6R4vY0=",
+        "lastModified": 1788833423,
+        "narHash": "sha256-QLPfYqvEBlduLcVtMFi00LeTFP/du+y9X1lmhqQ8JsI=",
         "owner": "AvengeMedia",
         "repo": "dms-plugin-registry",
-        "rev": "8670f2145dee4c0080d2252a945b78aecc9da206",
+        "rev": "61c22c96b624feb0ee38d65dae7d93ff9271a7b9",
         "type": "github"
       },
       "original": {
@@ -647,7 +649,6 @@
     "quickshell": {
       "inputs": {
         "nixpkgs": [
-          "caelestia-shell",
           "nixpkgs"
         ]
       },
@@ -701,6 +702,7 @@
         "nixvim": "nixvim",
         "ntfsplus": "ntfsplus",
         "plymouth-theme-material": "plymouth-theme-material",
+        "quickshell": "quickshell",
         "rip": "rip",
         "silentSDDM": "silentSDDM",
         "walker": "walker",

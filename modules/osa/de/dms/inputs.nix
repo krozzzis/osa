@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   flake-file.inputs = {
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";

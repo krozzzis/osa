@@ -9,7 +9,7 @@ delib.module {
   name = "osa.de.niri";
 
   options = { myconfig, ... }: {
-    osa.de.niri.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.de.niri.enable = delib.boolOption false;
     osa.de.niri.launcher.default = lib.mkOption {
       type = lib.types.attrs;
       default = {

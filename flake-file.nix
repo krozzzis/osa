@@ -4,7 +4,7 @@ let
   moduleDirs = [ ./modules ];
 in
 {
-  description = "OSA -- reusable denix module library for NixOS + home-manager. hosts/ and user identity live in separate flakes (osa-host, osa-user) that depend on this one.";
+  description = "OSA -- reusable denix module library and user-facing interface contract for NixOS + home-manager.";
 
   imports = flakeInputs.importModules moduleDirs;
 
@@ -70,7 +70,7 @@ in
   # Everything else lives in a sibling `inputs.nix` next to whichever
   # module(s) actually reference `inputs.<name>` -- see ./lib/flake-inputs.nix.
   #
-  # Downstream flakes (osa-user, osa-host) declare the SAME core inputs
+  # Downstream configuration flakes declare the SAME core inputs
   # themselves (chicken-and-egg-exempt bootstrap set) and pull in the rest
   # by running the same collectInputModules scan over `${inputs.osa}/modules`.
   flake-file.inputs = {
@@ -90,9 +90,9 @@ in
     flake-file.url = "github:vic/flake-file";
   };
 
-  # This flake is a module library, not a host builder -- hosts/ moved to
-  # osa-host, which is what actually runs denix.lib.configurations to
-  # produce nixosConfigurations. Nothing here needs `inputs` at eval time,
+  # This flake is a module library, not a host builder. A downstream flake
+  # (for example osa-krozzzis) runs denix.lib.configurations to produce
+  # nixosConfigurations. Nothing here needs `inputs` at eval time,
   # so there's no bootstrap chicken-and-egg like flake-file.nix's own
   # `outputs` had to work around.
   outputs = _inputs: { };

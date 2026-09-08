@@ -4,9 +4,8 @@
 # Downstream flakes never see this: osa-host scans only `${osa}/modules`,
 # never `${osa}/check`.
 #
-# Enablement mirrors the real niri rice (niri + dms + walker, fish shell)
-# on top of `user.gui`/`user.shell`, so both the always-on and gui/shell-
-# gated code paths of every module get forced through evaluation.
+# Enable all OSA rice bundles at once and select niri as primary. This exercises
+# the multi-session display-manager path as well as every compositor/shell pair.
 { delib, ... }:
 delib.host {
   name = "eval-check";
@@ -15,14 +14,14 @@ delib.host {
     user.constants.username = "nixos";
     user.constants.useremail = "eval-check@invalid";
 
-    user.gui.enable = true;
-    user.shell.enable = true;
     user.shell.default = myconfig.osa.shell.fish;
     user.editor.default = myconfig.osa.editor.nixvim;
     user.editor.gui = myconfig.osa.editor.zed;
 
-    osa.de.dms.enable = true;
-    osa.apps.walker.enable = true;
+    osa.de.rice.niri.enable = true;
+    osa.de.rice.caelestia.enable = true;
+    osa.de.rice.xfce.enable = true;
+    osa.de.rice.primary = "niri";
     osa.system.hibernate.enable = true;
     osa.system.hibernate.resumeDevice = "/dev/mapper/eval-check-luks";
     osa.system.hibernate.resumeOffset = 1;
