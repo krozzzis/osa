@@ -12,8 +12,8 @@ delib.module {
           "xfce"
         ]
       );
-      default = null;
-      description = "Primary enabled OSA rice; used as the display manager's default session.";
+      default = "niri";
+      description = "Primary enabled OSA rice; defaults to Niri and is used as the display manager's default session.";
     };
   };
 

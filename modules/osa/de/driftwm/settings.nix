@@ -18,9 +18,14 @@ delib.module {
           restore_windows = true;
         };
 
-        input.trackpad = {
-          natural_scroll = true;
-          tap_to_click = true;
+        input = {
+          keyboard = {
+            inherit (myconfig.user.input.keyboard) layout options;
+          };
+          trackpad = {
+            natural_scroll = true;
+            tap_to_click = true;
+          };
         };
 
         snap = {

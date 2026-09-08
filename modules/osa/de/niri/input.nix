@@ -2,9 +2,13 @@
 delib.module {
   name = "osa.de.niri";
 
-  home.ifEnabled = {
+  home.ifEnabled = { myconfig, ... }: {
     programs.niri.settings = {
       input = {
+        keyboard.xkb = {
+          inherit (myconfig.user.input.keyboard) layout options;
+        };
+
         touchpad = {
           tap = true;
           natural-scroll = true;

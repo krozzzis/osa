@@ -98,6 +98,18 @@ delib.module {
       description = "Monospace font for terminals/editors — used in wezterm, editors, etc.";
     };
 
+    user.input.keyboard.layout = lib.mkOption {
+      type = lib.types.str;
+      default = "us";
+      description = "Global XKB layout consumed by the system and compositor adapters.";
+    };
+
+    user.input.keyboard.options = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "Global comma-separated XKB options consumed by the system and compositor adapters.";
+    };
+
     user.shell.enable = delib.description (delib.boolOption false) "Shell mode: enables CLI utility modules (eza, fzf, rip, ripgrep, ...)";
 
     user.shell.default =

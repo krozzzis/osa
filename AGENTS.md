@@ -68,6 +68,8 @@ nix run .#write-flake
 | `user.dev.lsp.<name>` | attrsOf submodule | `{}` | модули `osa.dev.lsp.*` |
 | `user.dev.mcp.<name>` | attrsOf submodule | `{}` | модули `osa.dev.mcp.*` |
 | `user.gui.fonts.nerdfonts` | bool | `false` | osa-user |
+| `user.input.keyboard.layout` | str | `"us"` | osa-user keyboard profile |
+| `user.input.keyboard.options` | str | `""` | osa-user keyboard profile |
 
 Editor handle — attrset с обязательным package-полем `.pkg`; обычно это весь
 `myconfig.osa.editor.<name>`. Бинарник получают через `lib.getExe app.pkg`.
