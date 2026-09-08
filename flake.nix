@@ -88,6 +88,10 @@
       url = "github:AvengeMedia/dms-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    driftwm = {
+      url = "github:malbiruk/driftwm";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     elephant.url = "github:abenz1267/elephant";
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
