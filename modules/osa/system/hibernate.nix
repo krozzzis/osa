@@ -1,6 +1,7 @@
 {
   delib,
   lib,
+  pkgs,
   ...
 }:
 delib.module {
@@ -81,5 +82,41 @@ delib.module {
       SuspendEstimationSec = cfg.suspendEstimationSec;
       HibernateOnACPower = cfg.hibernateOnACPower;
     };
+
+    # systemd uses an alarmtimer for suspend-then-hibernate.  Some AMD s2idle
+    # firmware (notably Renoir/Lucienne/Cezanne) does not turn that alarm into
+    # a platform wake event: opening the lid later wakes the machine, at which
+    # point systemd notices the expired timer and hibernates immediately.
+    # Program the RTC's legacy wakealarm as well so the firmware actually wakes
+    # the machine at HibernateDelaySec.  systemd still owns the decision to
+    # hibernate; this hook only supplies the missing hardware wake event.
+    environment.etc."systemd/system-sleep/osa-suspend-then-hibernate-rtc".source =
+      pkgs.writeShellScript "osa-suspend-then-hibernate-rtc" ''
+        set -eu
+
+        wakealarm=/sys/class/rtc/rtc0/wakealarm
+        if [ "$2" != suspend-then-hibernate ] || [ ! -w "$wakealarm" ]; then
+          exit 0
+        fi
+
+        case "$1:''${SYSTEMD_SLEEP_ACTION:-}" in
+          pre:suspend)
+            delay_usec="$(${pkgs.systemd}/bin/systemd-analyze timespan ${lib.escapeShellArg cfg.delay} \
+              | ${pkgs.gnused}/bin/sed -n 's/^[[:space:]]*μs:[[:space:]]*//p')"
+            if [ -z "$delay_usec" ]; then
+              echo "Could not parse HibernateDelaySec=${cfg.delay}" >&2
+              exit 1
+            fi
+
+            now="$(${pkgs.coreutils}/bin/cat /sys/class/rtc/rtc0/since_epoch)"
+            echo 0 > "$wakealarm"
+            echo "$((now + delay_usec / 1000000))" > "$wakealarm"
+            ;;
+          post:suspend)
+            # Avoid leaving a stale alarm behind after a manual wakeup.
+            echo 0 > "$wakealarm"
+            ;;
+        esac
+      '';
   };
 }

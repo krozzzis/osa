@@ -23,6 +23,9 @@ delib.host {
 
     osa.de.dms.enable = true;
     osa.apps.walker.enable = true;
+    osa.system.hibernate.enable = true;
+    osa.system.hibernate.resumeDevice = "/dev/mapper/eval-check-luks";
+    osa.system.hibernate.resumeOffset = 1;
     osa.system.plymouth.enable = true;
   };
 

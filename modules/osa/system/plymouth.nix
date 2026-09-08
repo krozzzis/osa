@@ -34,6 +34,22 @@ delib.module {
     boot.plymouth.logo = lib.mkDefault cfg.logo;
     boot.plymouth.font = lib.mkDefault "${myconfig.user.fonts.regular.pkg}/share/fonts/truetype/InterVariable.ttf";
 
+    # Keep the handoff to the shutdown splash visually clean.  Plymouth can
+    # only take DRM ownership after the compositor has released it, so there
+    # is a short VT interval during poweroff/reboot.  Make that interval truly
+    # silent instead of letting systemd's `auto` status and kernel errors flash
+    # on screen; diagnostics remain available in the journal.
+    boot.consoleLogLevel = lib.mkDefault 0;
+    boot.initrd.verbose = lib.mkDefault false;
+    boot.kernelParams = lib.mkAfter [
+      "quiet"
+      "udev.log_level=3"
+      "rd.udev.log_level=3"
+      "systemd.show_status=false"
+      "rd.systemd.show_status=false"
+      "vt.global_cursor_default=0"
+    ];
+
     # systemd-cryptsetup asks for the LUKS passphrase through Plymouth's
     # systemd password agent. The material theme implements DisplayPassword.
     boot.initrd.systemd.enable = lib.mkDefault true;
