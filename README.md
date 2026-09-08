@@ -130,11 +130,11 @@ keys, removes settings that OSA no longer declares, and reconciles the enabled
 
 ### Plymouth Material theme
 
-`osa.system.plymouth` installs the OSA Material theme and patches unsupported
-syntax from upstream theme 1.4 before it enters the initrd. The configured OSA
-logo is passed through `boot.plymouth.logo`, and systemd initrd support is
-enabled for the LUKS password prompt. Do not add the upstream theme package in
-a downstream host: OSA supplies the patched package itself.
+`osa.system.plymouth` installs the tested OSA Material theme directly from its
+source repository. The configured OSA logo is passed through
+`boot.plymouth.logo`, and systemd initrd support is enabled for the LUKS
+password prompt. Do not add a second theme package in a downstream host: OSA
+selects a single authoritative `material` package.
 
 ### Module flake inputs
 

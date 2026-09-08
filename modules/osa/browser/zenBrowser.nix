@@ -1,6 +1,6 @@
 {
   delib,
-  lib,
+  inputs,
   pkgs,
   ...
 }:
@@ -9,10 +9,10 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.browser.zenBrowser.enable = delib.boolOption myconfig.user.gui.enable;
-    osa.browser.zenBrowser.pkg = delib.packageOption pkgs.firefox;
+    osa.browser.zenBrowser.pkg =
+      delib.packageOption
+        inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
-
-  home.always.imports = [ ];
 
   nixos.ifEnabled = {
     environment.sessionVariables = {
@@ -20,8 +20,7 @@ delib.module {
     };
   };
 
-  home.ifEnabled = {
-    # Use firefox as fallback until zen-browser flake supports ffmpeg_8 (nixpkgs c043)
-    programs.firefox.enable = lib.mkDefault true;
+  home.ifEnabled = { cfg, ... }: {
+    home.packages = [ cfg.pkg ];
   };
 }

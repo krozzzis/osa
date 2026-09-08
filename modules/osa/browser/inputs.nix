@@ -1,5 +1,4 @@
-# For osa/browser/zenBrowser.nix (zen-browser) and its currently-commented-out
-# firefox-addons integration.
+# Flake inputs used by browser modules.
 { ... }:
 {
   flake-file.inputs = {

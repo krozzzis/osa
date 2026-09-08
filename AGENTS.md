@@ -116,13 +116,11 @@ Home Manager обычно создаёт config-файл как read-only symlin
 
 ### Plymouth
 
-`osa.system.plymouth` использует input `plymouth-theme-material`, но оборачивает
-его в исправленный derivation: Plymouth Script не поддерживает C-подобный
-тернарный оператор из upstream 1.4. Проверка derivation запрещает оставлять
-такой синтаксис в `material.script`; тема и script plugin попадают в initrd через
-`boot.plymouth.themePackages`. Не добавляй upstream-пакет темы в downstream:
-OSA принудительно устанавливает свой исправленный пакет, чтобы одноимённая
-директория `material` не могла его затенить.
+`osa.system.plymouth` использует готовый пакет из input
+`plymouth-theme-material`. Исправления Plymouth Script и Material You-визуал
+живут в исходном репозитории темы; не добавляй отдельный upstream-пакет в
+downstream. OSA принудительно выбирает одну версию `material`, чтобы
+одноимённая директория не могла её затенить.
 
 ### Flake input модулю
 
