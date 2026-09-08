@@ -8,6 +8,7 @@ delib.module {
         lib.types.enum [
           "niri"
           "caelestia"
+          "driftwm"
           "xfce"
         ]
       );
@@ -22,6 +23,7 @@ delib.module {
       anyEnabled = lib.any (name: myconfig.osa.de.rice.${name}.enable) [
         "niri"
         "caelestia"
+        "driftwm"
         "xfce"
       ];
     in
@@ -37,6 +39,7 @@ delib.module {
       names = [
         "niri"
         "caelestia"
+        "driftwm"
         "xfce"
       ];
       enabled = lib.filter (name: rice.${name}.enable) names;
@@ -44,6 +47,7 @@ delib.module {
       sessions = {
         niri = "niri";
         caelestia = "hyprland";
+        driftwm = "driftwm";
         xfce = "xfce";
       };
     in

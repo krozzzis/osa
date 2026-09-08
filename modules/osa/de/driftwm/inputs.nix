@@ -1,4 +1,4 @@
-# For osa/de/caelestia.nix.
+# For osa/de/driftwm.
 { ... }:
 {
   flake-file.inputs = {

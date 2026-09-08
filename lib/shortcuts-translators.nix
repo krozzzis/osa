@@ -108,7 +108,68 @@ let
       map toHyprlandStr (filter (s: s.enable && !isWorkspaceAction s) (myconfig.user.shortcuts or [ ]))
     );
 
+  # -- DriftWM translator --
+
+  driftModMap = {
+    Mod = "mod";
+    Ctrl = "ctrl";
+    Shift = "shift";
+    Alt = "alt";
+  };
+
+  toDriftMods =
+    mods: lib.concatStringsSep "+" (map (m: driftModMap.${m} or (throw "unknown modifier: ${m}")) mods);
+
+  niriToDriftAction = {
+    close-window = _value: "close-window";
+    toggle-overview = _value: "zoom-to-fit";
+    focus-column-left = _value: "center-nearest left";
+    focus-column-right = _value: "center-nearest right";
+    focus-window-or-workspace-down = _value: "center-nearest down";
+    focus-window-or-workspace-up = _value: "center-nearest up";
+    focus-workspace-down = _value: "center-nearest down";
+    focus-workspace-up = _value: "center-nearest up";
+    move-column-left = _value: "nudge-window left";
+    move-column-right = _value: "nudge-window right";
+    move-window-down-or-to-workspace-down = _value: "nudge-window down";
+    move-window-up-or-to-workspace-up = _value: "nudge-window up";
+    focus-workspace = value: "go-to-bookmark ${toString value}";
+    move-column-to-workspace = value: "move-to-bookmark ${toString value}";
+    maximize-column = _value: "fit-window";
+    fullscreen-window = _value: "toggle-fullscreen";
+    center-column = _value: "center-window";
+    quit = _value: "quit";
+    screenshot = _value: ''spawn grim -g "$(slurp -d)" - | wl-copy'';
+    screenshot-screen = _value: "spawn grim - | wl-copy";
+    screenshot-window = _value: "spawn driftwm msg screenshot window -o - | wl-copy";
+    spawn = value: "exec ${lib.escapeShellArgs value}";
+  };
+
+  toDriftwmBind =
+    shortcut:
+    let
+      actionName = head (attrNames shortcut.action);
+      actionValue = head (attrValues shortcut.action);
+      translate = niriToDriftAction.${actionName} or null;
+      modifiers = toDriftMods shortcut.mod;
+    in
+    if translate == null || lib.hasPrefix "XF86" shortcut.key || lib.hasInfix "Scroll" shortcut.key then
+      null
+    else
+      {
+        name = if modifiers == "" then shortcut.key else "${modifiers}+${shortcut.key}";
+        value = translate actionValue;
+      };
+
+  toDriftwmBinds =
+    { myconfig }:
+    listToAttrs (
+      filter (binding: binding != null) (
+        map toDriftwmBind (filter (shortcut: shortcut.enable) (myconfig.user.shortcuts or [ ]))
+      )
+    );
+
 in
 {
-  inherit toNiriBinds toHyprlandBindsList;
+  inherit toNiriBinds toHyprlandBindsList toDriftwmBinds;
 }

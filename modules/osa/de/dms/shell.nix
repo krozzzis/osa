@@ -36,7 +36,10 @@ delib.module {
       };
 
       # Multiple installed rice bundles must not start multiple shells.
-      systemd.user.services.dms.Unit.ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
+      systemd.user.services.dms.Unit.ConditionEnvironment = [
+        "|XDG_CURRENT_DESKTOP=niri"
+        "|XDG_CURRENT_DESKTOP=driftwm"
+      ];
 
       home.activation.fixDmsSettings = hm.dag.entryBefore [ "linkGeneration" ] ''
         settings_file="$HOME/.config/DankMaterialShell/settings.json"
