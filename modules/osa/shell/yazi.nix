@@ -27,9 +27,10 @@ delib.module {
         opener = {
           edit = [
             {
-              run = ''${lib.getExe myconfig.user.editor.default.pkg} "$@"'';
+              run = "${lib.getExe myconfig.user.editor.default.pkg} %s";
               block = true;
               desc = "Editor";
+              for = "unix";
             }
           ];
         };

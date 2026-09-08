@@ -135,12 +135,16 @@ delib.module {
       };
     }) "Default CLI editor handle; defaults to Neovim";
 
-    user.editor.gui = delib.description (lib.mkOption {
-      type = defaultAppType;
-      default = {
-        pkg = myconfig.osa.editor.zed.pkg;
-      };
-    }) "Default GUI editor handle; defaults to Zed";
+    user.editor.gui =
+      delib.description
+        (lib.mkOption {
+          type = defaultAppType;
+          default = {
+            pkg = myconfig.osa.editor.zed.pkg;
+            desktop = "dev.zed.Zed.desktop";
+          };
+        })
+        "Default GUI editor handle; defaults to Zed. Set `desktop` when its desktop-file ID differs from the package main program.";
 
     user.dev.lsp = lib.mkOption {
       type = lib.types.attrsOf lspServerSubmodule;
