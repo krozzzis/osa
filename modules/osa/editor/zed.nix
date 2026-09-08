@@ -10,6 +10,31 @@ delib.module {
   options = { myconfig, ... }: {
     osa.editor.zed.enable = delib.boolOption myconfig.user.gui.enable;
     osa.editor.zed.pkg = delib.packageOption pkgs.zed-editor;
+    osa.editor.zed.mimeTypes = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "text/plain"
+        "text/markdown"
+        "text/x-markdown"
+        "application/json"
+        "application/ld+json"
+        "application/x-yaml"
+        "text/yaml"
+        "text/x-yaml"
+        "application/toml"
+        "text/x-toml"
+        "application/xml"
+        "text/xml"
+        "text/html"
+        "text/css"
+        "application/javascript"
+        "text/javascript"
+        "application/typescript"
+        "text/x-nix"
+        "application/x-sh"
+      ];
+      description = "MIME types opened by Zed when it is enabled";
+    };
   };
 
   home.ifEnabled =
@@ -98,5 +123,10 @@ delib.module {
           };
         };
       };
+
+      # Keep CLI editing separate: Yazi, Git, and other terminal programs use
+      # `user.editor.default` (Nixvim), whereas desktop applications open
+      # these document types in the GUI editor.
+      xdg.mimeApps.defaultApplications = lib.genAttrs cfg.mimeTypes (_: "dev.zed.Zed.desktop");
     };
 }
