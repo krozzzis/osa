@@ -2,7 +2,6 @@
   delib,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 delib.module {

@@ -1,6 +1,5 @@
 {
   delib,
-  lib,
   pkgs,
   inputs,
   ...
@@ -8,7 +7,7 @@
 delib.module {
   name = "osa.apps.walker";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.apps.walker.enable = delib.boolOption false;
     osa.apps.walker.pkg = delib.packageOption (
       inputs.walker.packages.${pkgs.stdenv.hostPlatform.system}.default or pkgs.walker

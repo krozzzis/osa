@@ -1,17 +1,15 @@
 {
   delib,
-  lib,
-  pkgs,
   ...
 }:
 delib.module {
   name = "osa.system.optimize";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.system.optimize.enable = delib.boolOption true;
   };
 
-  nixos.ifEnabled = { myconfig, cfg, ... }: {
+  nixos.ifEnabled = { ... }: {
     boot.kernelParams = [ "nowatchdog" ];
 
     boot.loader.systemd-boot.configurationLimit = 4;

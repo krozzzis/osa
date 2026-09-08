@@ -1,4 +1,4 @@
-{ delib, host, ... }:
+{ delib, ... }:
 delib.module {
   name = "osa.de.niri";
 

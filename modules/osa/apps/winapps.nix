@@ -31,10 +31,7 @@ delib.module {
     };
 
   home.ifEnabled =
-    { myconfig, cfg, ... }:
-    let
-      inherit (myconfig.user.constants) username;
-    in
+    { ... }:
     {
       # home.file = {
       #   ".config/winapps/docker-compose.yml".text = ''

@@ -1,8 +1,12 @@
-{ delib, lib, pkgs, ... }:
+{
+  delib,
+  lib,
+  ...
+}:
 delib.module {
   name = "osa.system.hibernate";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.system.hibernate.enable = delib.boolOption false;
 
     osa.system.hibernate.delay = lib.mkOption {

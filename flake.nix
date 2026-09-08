@@ -112,6 +112,10 @@
       url = "github:krozzzis/plymouth-theme-material";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    rip = {
+      url = "github:cesarferreira/rip";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     silentSDDM = {
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";

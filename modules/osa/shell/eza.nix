@@ -1,4 +1,4 @@
-{ delib, lib, ... }:
+{ delib, ... }:
 delib.module {
   # ls replacement
   name = "osa.shell.eza";

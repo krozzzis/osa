@@ -1,13 +1,12 @@
 {
   delib,
-  lib,
   pkgs,
   ...
 }:
 delib.module {
   name = "osa.media.lspPlugins";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.media.lspPlugins.enable = delib.boolOption false;
     osa.media.lspPlugins.pkg = delib.packageOption pkgs.lsp-plugins;
   };

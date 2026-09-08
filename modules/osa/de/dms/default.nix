@@ -237,7 +237,9 @@ delib.module {
         ];
       };
       barConfigs' = map (
-        bar: bar // {
+        bar:
+        bar
+        // {
           transparency = transparency;
           widgetTransparency = transparency;
         }

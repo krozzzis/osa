@@ -1,8 +1,8 @@
-{ delib, lib, ... }:
+{ delib, ... }:
 delib.module {
   name = "osa.shell.fzf";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.shell.fzf.enable = delib.boolOption false;
   };
 

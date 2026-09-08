@@ -10,11 +10,19 @@
 #
 # Everything else has a neutral default, so a headless server can ignore
 # the whole gui/shell surface.
-{ delib, lib, pkgs, ... }:
+{
+  delib,
+  lib,
+  pkgs,
+  ...
+}:
 let
-  # A "default app" handle: an attrset carrying at least `.pkg`, so callers
-  # can do `app.pkg.meta.mainProgram or (lib.getName app.pkg)`.
-  defaultAppType = lib.types.attrs;
+  # Editor handles are usually complete `osa.editor.*` module attrsets. Keep
+  # their extra fields (`enable`, settings, …), while enforcing the one field
+  # every consumer relies on.
+  defaultAppType = lib.types.addCheck lib.types.attrs (
+    app: app ? pkg && lib.types.package.check app.pkg
+  );
 
   lspServerSubmodule = lib.types.submodule {
     options = {
@@ -32,28 +40,37 @@ let
     };
   };
 
-  mcpServerSubmodule = lib.types.submodule {
-    options = {
-      enable = delib.description (delib.boolOption true) "Enable this MCP server";
-      type = lib.mkOption {
-        type = lib.types.enum [
-          "local"
-          "remote"
-        ];
-        description = "MCP server type";
-      };
-      command = lib.mkOption {
-        type = lib.types.nullOr (lib.types.listOf lib.types.str);
-        default = null;
-        description = "Command for local MCP server";
-      };
-      url = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
-        description = "URL for remote MCP server";
-      };
-    };
-  };
+  mcpServerSubmodule =
+    lib.types.addCheck
+      (lib.types.submodule {
+        options = {
+          enable = delib.description (delib.boolOption true) "Enable this MCP server";
+          type = lib.mkOption {
+            type = lib.types.enum [
+              "local"
+              "remote"
+            ];
+            description = "MCP server type";
+          };
+          command = lib.mkOption {
+            type = lib.types.nullOr (lib.types.listOf lib.types.str);
+            default = null;
+            description = "Command for local MCP server";
+          };
+          url = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "URL for remote MCP server";
+          };
+        };
+      })
+      (
+        server:
+        if server.type == "local" then
+          server.command != null && server.command != [ ]
+        else
+          server.url != null
+      );
 in
 delib.module {
   name = "user";
@@ -81,7 +98,7 @@ delib.module {
       description = "Monospace font for terminals/editors — used in wezterm, editors, etc.";
     };
 
-    user.shell.enable = delib.description (delib.boolOption false) "Shell mode: enables CLI utility modules (eza, fzf, ripgrep, ...)";
+    user.shell.enable = delib.description (delib.boolOption false) "Shell mode: enables CLI utility modules (eza, fzf, rip, ripgrep, ...)";
 
     user.shell.default =
       delib.description
@@ -99,15 +116,19 @@ delib.module {
       type = lib.types.str;
     }) "Primary user's email, used for git config (required)";
 
-    user.editor.default =
-      delib.description
-        (lib.mkOption {
-          type = defaultAppType;
-          default = {
-            pkg = myconfig.osa.editor.vim.pkg;
-          };
-        })
-        "Default editor handle; consumers derive the binary via `.pkg.meta.mainProgram or (lib.getName .pkg)`";
+    user.editor.default = delib.description (lib.mkOption {
+      type = defaultAppType;
+      default = {
+        pkg = myconfig.osa.editor.nixvim.pkg;
+      };
+    }) "Default CLI editor handle; defaults to Neovim";
+
+    user.editor.gui = delib.description (lib.mkOption {
+      type = defaultAppType;
+      default = {
+        pkg = myconfig.osa.editor.zed.pkg;
+      };
+    }) "Default GUI editor handle; defaults to Zed";
 
     user.dev.lsp = lib.mkOption {
       type = lib.types.attrsOf lspServerSubmodule;

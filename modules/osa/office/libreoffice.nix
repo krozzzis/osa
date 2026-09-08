@@ -1,6 +1,5 @@
 {
   delib,
-  lib,
   pkgs,
   ...
 }:
@@ -13,7 +12,7 @@ delib.module {
 
   home.ifEnabled = {
     home.packages = with pkgs; [
-      libreoffice-qt-fresh
+      libreoffice-qt-stable
       hyphenDicts.ru-ru
       hyphenDicts.en-us
     ];

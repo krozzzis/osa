@@ -7,7 +7,7 @@
 delib.module {
   name = "osa.de.hyprland";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.de.hyprland.enable = delib.boolOption false;
     osa.de.hyprland.launcher.default = lib.mkOption {
       type = lib.types.attrs;

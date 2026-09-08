@@ -9,12 +9,15 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.editor.zed.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.editor.zed.pkg = delib.packageOption pkgs.zed-editor;
   };
 
   home.ifEnabled =
-    { myconfig, ... }:
+    { cfg, myconfig, ... }:
     let
-      enabledServers = lib.filterAttrs (_name: srv: srv.enable) myconfig.user.dev.lsp;
+      enabledServers = lib.filterAttrs (
+        _name: server: server.enable && server.package != null
+      ) myconfig.user.dev.lsp;
 
       zedLspConfigs = {
         "rust-analyzer" = {
@@ -41,6 +44,7 @@ delib.module {
 
       programs.zed-editor = {
         enable = true;
+        package = cfg.pkg;
 
         extensions = [
           "nix"
@@ -49,14 +53,10 @@ delib.module {
           "toml"
         ];
 
-        extraPackages = with pkgs; [
-          rust-analyzer
-          basedpyright
-          ruff
-          nixd
-          nixfmt
-          taplo
-        ];
+        extraPackages = [
+          pkgs.nixfmt
+        ]
+        ++ lib.mapAttrsToList (_name: server: server.package) enabledServers;
 
         userSettings = {
           telemetry = {

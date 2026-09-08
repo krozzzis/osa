@@ -18,6 +18,8 @@ delib.host {
     user.gui.enable = true;
     user.shell.enable = true;
     user.shell.default = myconfig.osa.shell.fish;
+    user.editor.default = myconfig.osa.editor.nixvim;
+    user.editor.gui = myconfig.osa.editor.zed;
 
     osa.de.dms.enable = true;
     osa.apps.walker.enable = true;

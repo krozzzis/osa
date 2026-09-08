@@ -21,7 +21,7 @@ Modules are grouped by category under `modules/osa/`:
 
 | Category      | Contents                                    |
 |----------------|----------------------------------------------|
-| `ai/`          | AI coding assistants (claude-code, opencode) |
+| `ai/`          | AI coding assistants (claude-code, codex, opencode) |
 | `apps/`        | misc applications                            |
 | `browser/`     | firefox, librewolf, zen-browser, tor         |
 | `de/`          | desktop environments (niri, hyprland, xfce, caelestia) + their shells (dms) |
@@ -31,7 +31,7 @@ Modules are grouped by category under `modules/osa/`:
 | `media/`       | audio/video apps                             |
 | `network/`     | yggdrasil                                    |
 | `office/`      | libreoffice                                  |
-| `shell/`       | CLI utilities (fish, zsh, eza, fzf, ripgrep, ...) |
+| `shell/`       | CLI utilities (fish, zsh, eza, fzf, rip, ripgrep, ...) |
 | `system/`      | system-level settings (audio, polkit, sddm, branding, ...) |
 | `terminal/`    | wezterm                                      |
 
@@ -108,8 +108,33 @@ user.constants.useremail = "<your-email>";
 ```
 
 Everything else (`user.gui.enable`, `user.shell.*`, `user.dev.*`, ...)
-defaults to off/null, so a headless server can ignore it entirely. See
-the table in `AGENTS.md` for the full contract.
+has a safe default, so a headless server can ignore it entirely. The editor
+contract has two handles: `user.editor.default` is the CLI editor and defaults
+to Neovim; `user.editor.gui` is the GUI editor and defaults to Zed. Each handle
+is an attrset with a package in `.pkg`, and can be replaced downstream:
+
+```nix
+user.editor.default = myconfig.osa.editor.vim;
+user.editor.gui = myconfig.osa.editor.zed;
+```
+
+See the table in `AGENTS.md` for the full contract.
+
+### Mutable Codex configuration
+
+`osa.ai.codex` deliberately keeps `~/.codex/config.toml` writable because Codex
+stores project trust and other runtime state there. During Home Manager
+activation, OSA merges `osa.ai.codex.settings`, preserves unmanaged runtime
+keys, removes settings that OSA no longer declares, and reconciles the enabled
+`user.dev.mcp` servers.
+
+### Plymouth Material theme
+
+`osa.system.plymouth` installs the OSA Material theme and patches unsupported
+syntax from upstream theme 1.4 before it enters the initrd. The configured OSA
+logo is passed through `boot.plymouth.logo`, and systemd initrd support is
+enabled for the LUKS password prompt. Do not add the upstream theme package in
+a downstream host: OSA supplies the patched package itself.
 
 ### Module flake inputs
 

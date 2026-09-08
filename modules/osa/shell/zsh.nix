@@ -44,10 +44,7 @@ delib.module {
   };
 
   nixos.ifEnabled =
-    { myconfig, ... }:
-    let
-      inherit (myconfig.user.constants) username;
-    in
+    { ... }:
     {
       programs.zsh.enable = true;
     };

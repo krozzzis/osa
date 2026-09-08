@@ -1,7 +1,6 @@
 {
   delib,
   lib,
-  pkgs,
   ...
 }:
 delib.module {
@@ -17,7 +16,7 @@ delib.module {
       enabledServers = lib.filterAttrs (_name: srv: srv.enable) myconfig.user.dev.mcp;
 
       mkMcpServer =
-        name: server:
+        _name: server:
         {
           type = server.type;
           enabled = true;

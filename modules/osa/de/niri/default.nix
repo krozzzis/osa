@@ -21,8 +21,8 @@ delib.module {
   nixos.always.imports = [ inputs.niri-pkgs.nixosModules.niri ];
 
   nixos.always.nixpkgs.overlays = [
-    (final: prev: {
-      libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (old: {
+    (_final: prev: {
+      libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (_old: {
         version = "0.2.0";
         src = prev.fetchFromGitLab {
           domain = "gitlab.freedesktop.org";

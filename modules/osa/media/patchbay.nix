@@ -7,7 +7,7 @@
 delib.module {
   name = "osa.media.patchbay";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.media.patchbay.enable = delib.boolOption false;
 
     osa.media.patchbay.plugins = delib.description (delib.listOfOption lib.types.package (

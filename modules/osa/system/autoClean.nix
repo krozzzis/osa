@@ -1,18 +1,17 @@
 {
   delib,
-  lib,
   pkgs,
   ...
 }:
 delib.module {
   name = "osa.system.autoClean";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.system.autoClean.enable = delib.boolOption true;
     osa.system.autoClean.keepGenerations = delib.description (delib.intOption 4) "Number of system/home-manager generations to keep";
   };
 
-  nixos.ifEnabled = { myconfig, cfg, ... }: {
+  nixos.ifEnabled = { cfg, ... }: {
     nix.gc = {
       automatic = true;
       dates = "weekly";

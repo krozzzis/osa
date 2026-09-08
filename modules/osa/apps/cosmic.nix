@@ -7,7 +7,7 @@
 delib.module {
   name = "osa.apps.cosmic";
 
-  options = { myconfig, ... }: {
+  options = { ... }: {
     osa.apps.cosmic = {
       enable = delib.boolOption false;
       files = delib.description (delib.boolOption true) "Cosmic file manager";

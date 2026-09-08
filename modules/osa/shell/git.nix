@@ -18,8 +18,7 @@ delib.module {
 
       settings.user.name = myconfig.user.constants.username;
       settings.user.email = myconfig.user.constants.useremail;
-      settings.core.editor =
-        myconfig.user.editor.default.pkg.meta.mainProgram or (lib.getName myconfig.user.editor.default.pkg);
+      settings.core.editor = lib.getExe myconfig.user.editor.default.pkg;
     };
   };
 

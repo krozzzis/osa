@@ -30,10 +30,7 @@ delib.module {
   };
 
   nixos.ifEnabled =
-    { myconfig, ... }:
-    let
-      inherit (myconfig.user.constants) username;
-    in
+    { ... }:
     {
       programs.fish.enable = true;
     };
