@@ -20,6 +20,7 @@ delib.module {
     programs.fish = {
       enable = true;
       generateCompletions = true;
+      shellAliases = myconfig.user.shell.aliases;
 
       interactiveShellInit = ''
         set fish_greeting # Disable greeting

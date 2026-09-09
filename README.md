@@ -116,6 +116,16 @@ user.editor.default = myconfig.osa.editor.vim;
 user.editor.gui = myconfig.osa.editor.zed;
 ```
 
+Shell aliases are declared once and are applied to every enabled Home Manager
+shell that supports `home.shellAliases` (including fish, zsh, and bash):
+
+```nix
+user.shell.aliases = {
+  y = "yazi";
+  v = "nvim";
+};
+```
+
 See the table in `AGENTS.md` for the full contract.
 
 ### Mutable Codex configuration

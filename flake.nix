@@ -24,6 +24,7 @@
     // {
       packages = (base.packages or { }) // {
         ${system} = (base.packages.${system} or { }) // {
+          osa = import ./packages/osa { inherit pkgs; };
           write-flake = evaluated.config.flake-file.apps.write-flake pkgs;
         };
       };

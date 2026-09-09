@@ -23,6 +23,7 @@ delib.module {
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
       history.size = 10000;
+      shellAliases = myconfig.user.shell.aliases;
 
       initContent = ''
         [[ -z $TMUX ]] || export TERM=screen-256color

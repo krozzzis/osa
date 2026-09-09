@@ -112,6 +112,16 @@ delib.module {
 
     user.shell.enable = delib.description (delib.boolOption false) "Shell mode: enables CLI utility modules (eza, fzf, rip, ripgrep, ...)";
 
+    user.shell.aliases = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      example = {
+        y = "yazi";
+        v = "nvim";
+      };
+      description = "Aliases shared by all Home Manager shell integrations (fish, zsh, bash, etc.).";
+    };
+
     user.shell.default =
       delib.description
         (lib.mkOption {
