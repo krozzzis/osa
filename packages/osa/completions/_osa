@@ -1,0 +1,56 @@
+#compdef osa
+
+_osa_configuration_names() {
+  local config_dir=$HOME/osa-user i
+
+  for ((i = 2; i < CURRENT; i++)); do
+    case ${words[i]} in
+      -c|--config)
+        ((i++))
+        config_dir=${words[i]}
+        ;;
+      --config=*) config_dir=${words[i]#*=} ;;
+    esac
+  done
+
+  config_dir=${config_dir/#\~/$HOME}
+  local -a configurations
+  configurations=("${(@f)$(nix eval --raw "$config_dir#nixosConfigurations" --apply 'x: builtins.concatStringsSep "\n" (builtins.attrNames x)' 2>/dev/null)}")
+  _describe configurations configurations
+}
+
+_osa() {
+  local context state line
+  typeset -A opt_args
+
+  _arguments -C \
+    '(-c --config)'{-c,--config}'[configuration flake]:flake directory:_directories' \
+    '--run0[elevate rebuilds with run0 instead of sudo]' \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '1:command:->command' \
+    '*::argument:->arguments'
+
+  case $state in
+    command)
+      local -a commands=(
+        'update:regenerate flake.nix and update flake.lock'
+        'update-switch:update and activate the configuration now'
+        'update-boot:update and activate the configuration on next boot'
+        'switch:build and activate the configuration now'
+        'boot:build and activate the configuration on next boot'
+        'build-iso:build a bootable system image'
+        'build-installer:build an installer package'
+        'help:show help'
+      )
+      _describe commands commands
+      ;;
+    arguments)
+      case ${line[1]} in
+        update|help) ;;
+        *) _osa_configuration_names ;;
+      esac
+      ;;
+  esac
+}
+
+_osa "$@"

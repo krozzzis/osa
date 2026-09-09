@@ -11,6 +11,9 @@ let
   # DMS supports NixOS, but its doctor only checks ID=nixos and ignores
   # distributions (such as OSA) that advertise ID_LIKE=nixos.
   dmsPackage = (inputs.dms.lib.mkDmsShell pkgs).overrideAttrs (old: {
+    # DMS stable aa4b99d changed its Go dependencies without updating the
+    # fixed-output hash in the flake.
+    vendorHash = "sha256-Ls6Dquwt0fzDCEjZ6FfTsZTXDI8408mFdByv/OWHVgI=";
     postPatch = (old.postPatch or "") + ''
       substituteInPlace cmd/dms/commands_doctor.go \
         --replace-fail \
