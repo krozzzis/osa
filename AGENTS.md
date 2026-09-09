@@ -171,16 +171,15 @@ nix run .#write-flake
 ```bash
 osa update
 osa switch nixlaptop-niri
-osa update-switch --run0 nixlaptop-niri
+osa update-switch nixlaptop-niri
 osa build-iso pi-backup
 osa build-installer nixlaptop-niri
 ```
 
 `osa` запускается от обычного пользователя. Только `nixos-rebuild switch/boot`
-повышает привилегии: по умолчанию через `sudo`, а с аргументом `--run0` — через
-интерактивный launcher systemd `run0`. Агентам при необходимости root-доступа
-следует предпочитать `run0 <command>` (или `osa ... --run0`) и не запускать всю
-сессию/весь workflow от root.
+повышает привилегии через интерактивный launcher systemd `run0`. Агентам при
+необходимости root-доступа также следует предпочитать `run0 <command>` и не
+запускать всю сессию/весь workflow от root.
 
 `check/` виден только внутри этого флейка — даунстрим сканирует только
 `${osa}/modules`. Реальную сборку машин проверяем в объединённом

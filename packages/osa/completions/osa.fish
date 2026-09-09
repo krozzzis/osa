@@ -42,6 +42,5 @@ complete -c osa -n 'not __osa_seen_command' -a build-iso -d 'Build a bootable sy
 complete -c osa -n 'not __osa_seen_command' -a build-installer -d 'Build an installer package'
 complete -c osa -n 'not __osa_seen_command' -a help -d 'Show help'
 complete -c osa -s c -l config -r -a '(__fish_complete_directories)' -d 'Configuration flake'
-complete -c osa -l run0 -d 'Elevate rebuilds with run0 instead of sudo'
 complete -c osa -s h -l help -d 'Show help'
 complete -c osa -n __osa_needs_configuration -a '(__osa_configuration_names)' -d Configuration

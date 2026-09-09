@@ -59,15 +59,15 @@ command. It operates on a downstream configuration flake (by default
 ```bash
 osa update
 osa switch nixlaptop-niri
-osa update-switch --run0 nixlaptop-niri
+osa update-switch nixlaptop-niri
 osa update-boot --config ~/other-config my-host
 osa build-iso pi-backup
 osa build-installer nixlaptop-niri
 ```
 
-`switch`, `boot`, `update-switch`, and `update-boot` use `sudo` only for the
-privileged `nixos-rebuild` step. Pass `--run0` to use systemd's interactive
-privilege launcher instead. Extra Nix arguments can be passed after `--`.
+`switch`, `boot`, `update-switch`, and `update-boot` use systemd's interactive
+`run0` privilege launcher for the `nixos-rebuild` step. Extra Nix arguments can
+be passed after `--`.
 
 ## Using OSA in your own configuration
 

@@ -7,7 +7,7 @@ default_config_dir="${HOME}/osa-user"
 
 usage() {
   cat <<EOF
-Usage: $program <command> [--config PATH] [--run0] <configuration> [-- EXTRA_ARGS...]
+Usage: $program <command> [--config PATH] <configuration> [-- EXTRA_ARGS...]
        $program update [--config PATH] [-- EXTRA_ARGS...]
 
 Commands:
@@ -21,12 +21,10 @@ Commands:
 
 Options:
   -c, --config PATH  Configuration flake (default: $default_config_dir)
-      --run0        Elevate rebuilds with run0 instead of sudo
   -h, --help         Show this help
 
 Examples:
   $program switch nixlaptop-niri
-  $program switch --run0 nixlaptop-niri
   $program switch --config ~/osa-user nixlaptop-niri
   $program update --config ~/osa-user
   $program build-installer eeepc-xfce
@@ -59,7 +57,7 @@ rebuild() {
   local action=$1
   write_flake
   echo "==> Running nixos-rebuild $action for $configuration" >&2
-  "${privilege_launcher[@]}" nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
+  run0 nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
 }
 
 flake_has_attr() {
@@ -99,7 +97,6 @@ shift
 config_dir=$default_config_dir
 configuration=
 extra_args=()
-privilege_launcher=(sudo)
 
 while (($#)); do
   case $1 in
@@ -110,10 +107,6 @@ while (($#)); do
       ;;
     --config=*)
       config_dir=${1#*=}
-      shift
-      ;;
-    --run0)
-      privilege_launcher=(run0)
       shift
       ;;
     -h|--help)
@@ -155,7 +148,7 @@ case $command in
     update_flake
     # update_flake has already generated flake.nix from the updated inputs.
     echo "==> Running nixos-rebuild ${command#update-} for $configuration" >&2
-    "${privilege_launcher[@]}" nixos-rebuild "${command#update-}" --flake "$config_dir#$configuration" "${extra_args[@]}"
+    run0 nixos-rebuild "${command#update-}" --flake "$config_dir#$configuration" "${extra_args[@]}"
     ;;
   build-iso)
     [[ -n $configuration ]] || die "$command requires a configuration name"

@@ -40,7 +40,7 @@ _osa() {
   if [[ -z $command ]]; then
     COMPREPLY=($(compgen -W 'update update-switch update-boot switch boot build-iso build-installer help' -- "$cur"))
   elif [[ $cur == -* ]]; then
-    COMPREPLY=($(compgen -W '-c --config --run0 -h --help --' -- "$cur"))
+    COMPREPLY=($(compgen -W '-c --config -h --help --' -- "$cur"))
   elif [[ $command != update && $command != help ]]; then
     COMPREPLY=($(compgen -W "$(_osa_configuration_names)" -- "$cur"))
   fi

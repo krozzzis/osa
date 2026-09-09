@@ -25,7 +25,6 @@ _osa() {
 
   _arguments -C \
     '(-c --config)'{-c,--config}'[configuration flake]:flake directory:_directories' \
-    '--run0[elevate rebuilds with run0 instead of sudo]' \
     '(-h --help)'{-h,--help}'[show help]' \
     '1:command:->command' \
     '*::argument:->arguments'
