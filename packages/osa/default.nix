@@ -6,6 +6,7 @@ pkgs.writeShellApplication {
     nix
     nixos-rebuild
     sudo
+    systemd
   ];
   text = builtins.readFile ../../scripts/osa/osa.sh;
 }

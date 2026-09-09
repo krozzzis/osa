@@ -50,6 +50,25 @@ nix run .#write-flake
 
 `nix flake check` fails if `flake.nix` is out of sync.
 
+## OSA CLI
+
+The `osa.system.osa-cli` module is enabled by default and installs the `osa`
+command. It operates on a downstream configuration flake (by default
+`~/osa-user`) and regenerates its `flake.nix` when required:
+
+```bash
+osa update
+osa switch nixlaptop-niri
+osa update-switch --run0 nixlaptop-niri
+osa update-boot --config ~/other-config my-host
+osa build-iso pi-backup
+osa build-installer nixlaptop-niri
+```
+
+`switch`, `boot`, `update-switch`, and `update-boot` use `sudo` only for the
+privileged `nixos-rebuild` step. Pass `--run0` to use systemd's interactive
+privilege launcher instead. Extra Nix arguments can be passed after `--`.
+
 ## Using OSA in your own configuration
 
 Add it as a flake input:

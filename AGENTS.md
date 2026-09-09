@@ -162,6 +162,26 @@ nix flake check
 nix run .#write-flake
 ```
 
+## OSA CLI и повышение привилегий
+
+Модуль `osa.system.osa-cli` включён по умолчанию и устанавливает команду
+`osa`. Она работает с downstream-флейком из `~/osa-user`, если путь не
+переопределён через `--config`:
+
+```bash
+osa update
+osa switch nixlaptop-niri
+osa update-switch --run0 nixlaptop-niri
+osa build-iso pi-backup
+osa build-installer nixlaptop-niri
+```
+
+`osa` запускается от обычного пользователя. Только `nixos-rebuild switch/boot`
+повышает привилегии: по умолчанию через `sudo`, а с аргументом `--run0` — через
+интерактивный launcher systemd `run0`. Агентам при необходимости root-доступа
+следует предпочитать `run0 <command>` (или `osa ... --run0`) и не запускать всю
+сессию/весь workflow от root.
+
 `check/` виден только внутри этого флейка — даунстрим сканирует только
 `${osa}/modules`. Реальную сборку машин проверяем в объединённом
 `~/osa-user` (репозиторий `osa-krozzzis`):
