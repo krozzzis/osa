@@ -26,6 +26,7 @@ delib.module {
             { app-id = "librewolf"; }
             { app-id = "zen"; }
             { app-id = "telegram-desktop"; }
+            { app-id = "vlc"; }
           ];
           open-maximized = true;
         }
