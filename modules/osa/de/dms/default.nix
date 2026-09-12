@@ -21,21 +21,26 @@ let
           'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
     '';
     postInstall = (old.postInstall or "") + ''
-        substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
-          --replace-fail \
-            'property var workspaceNameIcons: ({})' \
-            'property var workspaceNameIcons: ({})
-      property var workspaceNames: []'
-        substituteInPlace $out/share/quickshell/dms/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
-          --replace-fail \
-            'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);' \
-            'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);
+          substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
+            --replace-fail \
+              'property var workspaceNameIcons: ({})' \
+              'property var workspaceNameIcons: ({})
+        property var workspaceNames: []'
+          substituteInPlace $out/share/quickshell/dms/Common/settings/SettingsSpec.js \
+            --replace-fail \
+              'workspaceNameIcons: { def: {} },' \
+              'workspaceNameIcons: { def: {} },
+      workspaceNames: { def: [] },'
+          substituteInPlace $out/share/quickshell/dms/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
+            --replace-fail \
+              'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);' \
+              'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);
 
-          if (SettingsData.workspaceNames.length > 0) {
-              const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
-              workspaces = workspaces.filter(ws => order.has(ws.name));
-              workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
-          }'
+            if (SettingsData.workspaceNames.length > 0) {
+                const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
+                workspaces = workspaces.filter(ws => order.has(ws.name));
+                workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
+            }'
     '';
   });
 in
