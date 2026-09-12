@@ -129,6 +129,10 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    koala-clash = {
+      url = "github:endotrizine/koala-clash-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     niri-pkgs = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
