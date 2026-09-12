@@ -202,5 +202,17 @@ delib.module {
       default = 8;
       description = "Global compositor gap in pixels — used for niri/hyprland layout gaps and to derive DMS frameRounding (frameRounding = cornerRadius + gap).";
     };
+
+    user.ui.workspaces = lib.mkOption {
+      type = lib.types.addCheck (lib.types.listOf lib.types.nonEmptyStr) (
+        workspaces:
+        workspaces != [ ]
+        && lib.length workspaces <= 10
+        && lib.length workspaces == lib.length (lib.unique workspaces)
+      );
+      default = map toString (lib.range 1 10);
+      example = map toString (lib.range 0 9);
+      description = "Ordered names of global virtual desktops. The first ten entries are bound to Super+[1..9,0] by compositor adapters and exposed to desktop shells.";
+    };
   };
 }

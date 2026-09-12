@@ -22,6 +22,7 @@ delib.module {
       blurEnabled = true;
       fontFamily = myconfig.user.fonts.regular.name;
       monoFontFamily = myconfig.user.fonts.monospace.name;
+      workspaceNames = myconfig.user.ui.workspaces;
     };
   };
 }

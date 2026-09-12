@@ -1,8 +1,8 @@
-{ delib, ... }:
+{ delib, lib, ... }:
 delib.module {
   name = "osa.de.niri";
 
-  home.ifEnabled = {
+  home.ifEnabled = { myconfig, ... }: {
     programs.niri.settings = {
       # -- Spawn at startup
       spawn-at-startup = [
@@ -33,17 +33,14 @@ delib.module {
       screenshot-path = "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png";
       animations.enable = true;
 
-      # -- Named workspaces
-      workspaces."1" = { };
-      workspaces."2" = { };
-      workspaces."3" = { };
-      workspaces."4" = { };
-      workspaces."5" = { };
-      workspaces."6" = { };
-      workspaces."7" = { };
-      workspaces."8" = { };
-      workspaces."9" = { };
-      workspaces."10" = { };
+      # Niri keeps named workspaces alive. DMS filters its additional dynamic
+      # empty workspace using the same global list.
+      workspaces = lib.listToAttrs (
+        lib.imap0 (index: workspace: {
+          name = lib.fixedWidthNumber 2 index;
+          value.name = workspace;
+        }) myconfig.user.ui.workspaces
+      );
     };
   };
 }

@@ -15,10 +15,25 @@ let
     # fixed-output hash in the flake.
     vendorHash = "sha256-Ls6Dquwt0fzDCEjZ6FfTsZTXDI8408mFdByv/OWHVgI=";
     postPatch = (old.postPatch or "") + ''
-      substituteInPlace cmd/dms/commands_doctor.go \
-        --replace-fail \
-          'case osRelease["ID"] == "nixos":' \
-          'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
+        substituteInPlace cmd/dms/commands_doctor.go \
+          --replace-fail \
+            'case osRelease["ID"] == "nixos":' \
+            'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
+        substituteInPlace quickshell/Common/SettingsData.qml \
+          --replace-fail \
+            'property var workspaceNameIcons: ({})' \
+            'property var workspaceNameIcons: ({})
+      property var workspaceNames: []'
+        substituteInPlace quickshell/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
+          --replace-fail \
+            'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);' \
+            'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);
+
+          if (SettingsData.workspaceNames.length > 0) {
+              const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
+              workspaces = workspaces.filter(ws => order.has(ws.name));
+              workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
+          }'
     '';
   });
 in
