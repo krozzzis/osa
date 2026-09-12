@@ -21,7 +21,31 @@ delib.host {
     osa.de.rice.niri.enable = true;
     osa.de.rice.caelestia.enable = true;
     osa.de.rice.xfce.enable = true;
+    osa.de.rice.driftwm.enable = true;
     osa.de.rice.primary = "niri";
+
+    # Exercise opt-in branches that are not enabled by the desktop profile.
+    osa.apps.cosmic.enable = true;
+    osa.apps.polkitLxqtAgent.enable = true;
+    osa.browser.chromium.enable = true;
+    osa.dev.lsp.basedpyright.enable = true;
+    osa.dev.lsp.jsonnet-ls.enable = true;
+    osa.dev.lsp.lua-ls.enable = true;
+    osa.dev.lsp.nixd.enable = true;
+    osa.dev.lsp.ruff.enable = true;
+    osa.dev.lsp.rust-analyzer.enable = true;
+    osa.dev.lsp.taplo.enable = true;
+    osa.dev.mcp.nixos.enable = true;
+    osa.dev.mcp.pcap-analyze.enable = true;
+    osa.dev.mcp.playwright.enable = true;
+    osa.dev.mcp.websearch.enable = true;
+    osa.media.lspPlugins.enable = true;
+    osa.media.patchbay.enable = true;
+    osa.media.vstPath.enable = true;
+    osa.network.yggdrasil.enable = true;
+    osa.shell.fzf.enable = true;
+    osa.system.libvirtd.enable = true;
+    osa.system.ntfs.enable = true;
     osa.system.hibernate.enable = true;
     osa.system.hibernate.resumeDevice = "/dev/mapper/eval-check-luks";
     osa.system.hibernate.resumeOffset = 1;

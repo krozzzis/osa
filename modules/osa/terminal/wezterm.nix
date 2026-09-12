@@ -13,7 +13,7 @@ delib.module {
     programs.wezterm = {
       enable = true;
       settings = {
-        # Прозрачность синхронизирована с DMS панелью через глобальный osa.ui.transparency (default 0.95)
+        # Share the global opacity with DMS and other supported UI components.
         window_background_opacity = myconfig.osa.ui.transparency;
         text_background_opacity = 1.0;
         wayland_window_background_blur = true;

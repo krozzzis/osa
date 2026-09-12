@@ -28,6 +28,7 @@ delib.module {
       codexBin = lib.getExe cfg.pkg;
       hm = inputs.home-manager.lib.hm;
       settingsJson = (pkgs.formats.json { }).generate "osa-codex-settings.json" cfg.settings;
+      inherit (import ../../../lib/mutable-settings.nix) jqMergeFilter;
 
       enabledLsp = lib.filterAttrs (
         _name: server: server.enable && server.package != null
@@ -112,22 +113,9 @@ delib.module {
         fi
 
         ${pkgs.jq}/bin/jq --slurpfile previous "$work_dir/previous.json" \
-          --slurpfile declared ${settingsJson} '
-            def remove_managed($mask):
-              if type == "object" and ($mask | type) == "object" then
-                reduce ($mask | keys[]) as $key (.;
-                  if (.[$key] | type) == "object" and ($mask[$key] | type) == "object" then
-                    .[$key] |= remove_managed($mask[$key])
-                    | if .[$key] == {} then del(.[$key]) else . end
-                  else
-                    del(.[$key])
-                  end
-                )
-              else
-                .
-              end;
-            remove_managed($previous[0]) * $declared[0]
-          ' "$work_dir/current.json" > "$work_dir/merged.json"
+          --slurpfile declared ${settingsJson} \
+          ${lib.escapeShellArg jqMergeFilter} \
+          "$work_dir/current.json" > "$work_dir/merged.json"
 
         ${pkgs.remarshal}/bin/remarshal --if json --of toml "$work_dir/merged.json" "$work_dir/config.toml"
         ${pkgs.coreutils}/bin/install -m 600 "$work_dir/config.toml" "$config_file"

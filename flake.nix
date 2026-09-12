@@ -17,20 +17,37 @@
         ];
       };
       base = evaluated.config.outputs inputs;
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      packages = inputs.nixpkgs.lib.genAttrs systems (
+        system:
+        let
+          pkgs = import inputs.nixpkgs { inherit system; };
+        in
+        {
+          osa = import ./packages/osa { inherit pkgs; };
+          write-flake = evaluated.config.flake-file.apps.write-flake pkgs;
+        }
+      );
       system = "x86_64-linux";
       pkgs = import inputs.nixpkgs { inherit system; };
     in
     base
     // {
-      packages = (base.packages or { }) // {
-        ${system} = (base.packages.${system} or { }) // {
-          osa = import ./packages/osa { inherit pkgs; };
-          write-flake = evaluated.config.flake-file.apps.write-flake pkgs;
-        };
-      };
+      packages = inputs.nixpkgs.lib.recursiveUpdate (base.packages or { }) packages;
       checks = (base.checks or { }) // {
         ${system} = (base.checks.${system} or { }) // {
           flake-file-in-sync = evaluated.config.flake-file.check-flake-file pkgs;
+
+          osa-cli = pkgs.runCommand "osa-cli-tests" { nativeBuildInputs = [ pkgs.bash ]; } (
+            builtins.concatStringsSep "\n" [
+              "substitute ${./check/osa-cli.sh} test.sh --replace-fail @osaScript@ ${./scripts/osa/osa.sh} --replace-fail @bash@ ${pkgs.bash}/bin/bash"
+              "bash test.sh"
+              "touch $out"
+            ]
+          );
 
           # Fully evaluate every osa module against the `user.*` interface
           # contract via a mock host (./check/default.nix), forcing the
@@ -40,28 +57,33 @@
             let
               lib = inputs.nixpkgs.lib;
               findInputsNix = import ./lib/flake-inputs.nix { inherit lib; };
+              evaluatedHost =
+                (inputs.denix.lib.configurations {
+                  moduleSystem = "nixos";
+                  homeManagerUser = "nixos";
+                  paths = [
+                    ./modules
+                    ./check
+                  ];
+                  exclude = findInputsNix.findPaths [
+                    ./modules
+                    ./check
+                  ];
+                  extensions =
+                    let
+                      dext = inputs.denix.lib.extensions;
+                    in
+                    [
+                      dext.args
+                      (dext.base.withConfig { args.enable = true; })
+                    ];
+                  specialArgs = { inherit inputs; };
+                }).eval-check.config.system.build.toplevel.drvPath;
             in
-            (inputs.denix.lib.configurations {
-              moduleSystem = "nixos";
-              homeManagerUser = "nixos";
-              paths = [
-                ./modules
-                ./check
-              ];
-              exclude = findInputsNix.findPaths [
-                ./modules
-                ./check
-              ];
-              extensions =
-                let
-                  dext = inputs.denix.lib.extensions;
-                in
-                [
-                  dext.args
-                  (dext.base.withConfig { args.enable = true; })
-                ];
-              specialArgs = { inherit inputs; };
-            }).eval-check.config.system.build.toplevel;
+            pkgs.runCommand "osa-modules-eval" { } (
+              assert builtins.isString evaluatedHost;
+              "touch $out"
+            );
         };
       };
     };

@@ -46,10 +46,11 @@ write_flake() {
 }
 
 update_flake() {
+  # Refresh the generated input declarations before updating the lock file.
+  # Regenerate again afterwards because updated inputs can change flake-file output.
+  write_flake
   echo "==> Updating flake inputs in $config_dir" >&2
   run_in_config nix flake update "${extra_args[@]}"
-  # Generate with the updated inputs. Doing this before the lock update can
-  # fail when local configuration already uses an option added by a new input.
   write_flake
 }
 

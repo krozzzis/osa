@@ -1,5 +1,6 @@
 {
   delib,
+  lib,
   pkgs,
   ...
 }:
@@ -8,7 +9,11 @@ delib.module {
 
   options = { ... }: {
     osa.system.autoClean.enable = delib.boolOption true;
-    osa.system.autoClean.keepGenerations = delib.description (delib.intOption 4) "Number of system/home-manager generations to keep";
+    osa.system.autoClean.keepGenerations = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 4;
+      description = "Number of system and Home Manager generations to retain.";
+    };
   };
 
   nixos.ifEnabled = { cfg, ... }: {
@@ -20,41 +25,47 @@ delib.module {
 
     nix.settings.auto-optimise-store = true;
 
-    systemd.services.nix-auto-clean = {
-      description = "Delete old NixOS and home-manager generations";
-      after = [ "network.target" ];
+    systemd.services.nix-generation-prune = {
+      description = "Prune old NixOS generations";
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pkgs.writeShellScript "nix-auto-clean" ''
           set -euo pipefail
 
-          KEEP=${toString cfg.keepGenerations}
-
-          # Delete old system generations
-          ${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +$KEEP 2>/dev/null || true
-
-          # Delete old home-manager generations
-          if command -v home-manager >/dev/null; then
-            GEN_LIST=$(home-manager generations 2>/dev/null | ${pkgs.gnugrep}/bin/grep -Eo '^[0-9]+' | sort -n | head -n -$KEEP || true)
-            if [ -n "$GEN_LIST" ]; then
-              echo "$GEN_LIST" | xargs -r home-manager remove-generations 2>/dev/null || true
-            fi
-          fi
-
-          # Garbage collection
-          ${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 14d 2>/dev/null || true
+          ${pkgs.nix}/bin/nix-env \
+            --profile /nix/var/nix/profiles/system \
+            --delete-generations +${toString cfg.keepGenerations}
         ''}";
         Nice = 19;
       };
     };
 
-    systemd.timers.nix-auto-clean = {
-      description = "Weekly Nix cleanup";
+    systemd.timers.nix-generation-prune = {
+      description = "Weekly NixOS generation pruning";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnCalendar = "weekly";
         Persistent = true;
       };
+    };
+  };
+
+  home.ifEnabled = { cfg, ... }: {
+    systemd.user.services.home-manager-generation-prune = {
+      Unit.Description = "Prune old Home Manager generations";
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.home-manager}/bin/home-manager expire-generations '-${toString cfg.keepGenerations} generations'";
+      };
+    };
+
+    systemd.user.timers.home-manager-generation-prune = {
+      Unit.Description = "Weekly Home Manager generation pruning";
+      Timer = {
+        OnCalendar = "weekly";
+        Persistent = true;
+      };
+      Install.WantedBy = [ "timers.target" ];
     };
   };
 }

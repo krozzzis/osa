@@ -13,6 +13,7 @@ delib.module {
     let
       hm = inputs.home-manager.lib.hm;
       declaredSettings = (pkgs.formats.json { }).generate "osa-dms-settings.json" cfg.settings;
+      inherit (import ../../../../lib/mutable-settings.nix) jqMergeFilter;
     in
     {
       programs.dank-material-shell = {
@@ -79,20 +80,9 @@ delib.module {
         fi
 
         ${pkgs.jq}/bin/jq --slurpfile previous "$work_dir/previous.json" \
-          --slurpfile declared ${declaredSettings} '
-            def remove_managed($mask):
-              if type == "object" and ($mask | type) == "object" then
-                reduce ($mask | keys[]) as $key (.;
-                  if (.[$key] | type) == "object" and ($mask[$key] | type) == "object" then
-                    .[$key] |= remove_managed($mask[$key])
-                    | if .[$key] == {} then del(.[$key]) else . end
-                  else
-                    del(.[$key])
-                  end
-                )
-              else . end;
-            remove_managed($previous[0]) * $declared[0]
-          ' "$work_dir/current.json" > "$work_dir/settings.json"
+          --slurpfile declared ${declaredSettings} \
+          ${lib.escapeShellArg jqMergeFilter} \
+          "$work_dir/current.json" > "$work_dir/settings.json"
 
         ${pkgs.coreutils}/bin/install -m 600 "$work_dir/settings.json" "$settings_file"
         ${pkgs.coreutils}/bin/install -m 600 ${declaredSettings} "$managed_settings"

@@ -4,19 +4,22 @@
   pkgs,
   ...
 }:
+let
+  osaTypes = import ../../../lib/types.nix { inherit lib; };
+in
 delib.module {
   name = "user.defaultApps";
 
   options = { myconfig, ... }: {
     user.terminal.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default = {
         pkg = myconfig.osa.terminal.wezterm.pkg;
       };
       description = "Default terminal application.";
     };
     user.browser.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default =
         if myconfig.osa.browser.zenBrowser.enable or false then
           { pkg = myconfig.osa.browser.zenBrowser.pkg; }
@@ -27,35 +30,35 @@ delib.module {
       description = "Default web browser.";
     };
     user.fileManager.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default = {
         pkg = pkgs.nautilus;
       };
       description = "Default file manager.";
     };
     user.musicPlayer.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default = {
         pkg = myconfig.osa.media.vlc.pkg;
       };
       description = "Default music player.";
     };
     user.videoPlayer.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default = {
         pkg = myconfig.osa.media.vlc.pkg;
       };
       description = "Default video player.";
     };
     user.imageViewer.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default = {
         pkg = myconfig.osa.apps.swayimg.pkg;
       };
       description = "Default image viewer.";
     };
     user.pdfViewer.default = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.app;
       default = {
         pkg = myconfig.osa.apps.cosmic.reader.pkg;
       };

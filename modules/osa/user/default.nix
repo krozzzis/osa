@@ -17,6 +17,8 @@
   ...
 }:
 let
+  osaTypes = import ../../../lib/types.nix { inherit lib; };
+
   iconThemeType = lib.types.submodule {
     options = {
       pkg = lib.mkOption {
@@ -29,13 +31,6 @@ let
       };
     };
   };
-
-  # Editor handles are usually complete `osa.editor.*` module attrsets. Keep
-  # their extra fields (`enable`, settings, …), while enforcing the one field
-  # every consumer relies on.
-  defaultAppType = lib.types.addCheck lib.types.attrs (
-    app: app ? pkg && lib.types.package.check app.pkg
-  );
 
   lspServerSubmodule = lib.types.submodule {
     options = {
@@ -66,12 +61,12 @@ let
             description = "MCP server type";
           };
           command = lib.mkOption {
-            type = lib.types.nullOr (lib.types.listOf lib.types.str);
+            type = lib.types.nullOr (lib.types.listOf lib.types.nonEmptyStr);
             default = null;
             description = "Command for local MCP server";
           };
           url = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
+            type = lib.types.nullOr lib.types.nonEmptyStr;
             default = null;
             description = "URL for remote MCP server";
           };
@@ -94,7 +89,7 @@ delib.module {
     user.gui.fonts.nerdfonts = delib.description (delib.boolOption false) "Nerd Fonts for icons in terminal and GUI prompts";
 
     user.fonts.regular = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.font;
       default = {
         pkg = pkgs.inter;
         name = "Inter";
@@ -103,7 +98,7 @@ delib.module {
     };
 
     user.fonts.monospace = lib.mkOption {
-      type = lib.types.attrs;
+      type = osaTypes.font;
       default = {
         pkg = pkgs.jetbrains-mono;
         name = "JetBrains Mono";
@@ -138,7 +133,7 @@ delib.module {
     user.shell.default =
       delib.description
         (lib.mkOption {
-          type = lib.types.nullOr lib.types.attrs;
+          type = lib.types.nullOr osaTypes.app;
           default = null;
         })
         "Default login shell as `{ pkg = <shell package>; }`; null leaves the system default. Set to e.g. `{ pkg = myconfig.osa.shell.fish.pkg; }`";
@@ -152,7 +147,7 @@ delib.module {
     }) "Primary user's email, used for git config (required)";
 
     user.editor.default = delib.description (lib.mkOption {
-      type = defaultAppType;
+      type = osaTypes.app;
       default = {
         pkg = myconfig.osa.editor.nixvim.pkg;
       };
@@ -161,7 +156,7 @@ delib.module {
     user.editor.gui =
       delib.description
         (lib.mkOption {
-          type = defaultAppType;
+          type = osaTypes.app;
           default = {
             pkg = myconfig.osa.editor.zed.pkg;
             desktop = "dev.zed.Zed.desktop";
@@ -182,7 +177,7 @@ delib.module {
     };
 
     user.ui.transparency = lib.mkOption {
-      type = lib.types.float;
+      type = lib.types.addCheck lib.types.float (value: value >= 0.0 && value <= 1.0);
       default = 0.95;
       description = "Global UI transparency (0.0 fully transparent, 1.0 fully opaque) used for all supported apps (DMS, etc.)";
     };

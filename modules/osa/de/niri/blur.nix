@@ -12,8 +12,8 @@ delib.module {
           matches = [
             { app-id = "^org\\.wezfurlong\\.wezterm$"; }
           ];
-          # Окно должно быть полупрозрачным, иначе blur не видно. Прозрачность задаётся в wezterm (window_background_opacity),
-          # здесь только убираем бордер с фоном, чтобы он не просвечивал.
+          # WezTerm supplies window opacity; remove its opaque border so the
+          # compositor blur remains visible at the window edge.
           draw-border-with-background = false;
           geometry-corner-radius = {
             top-left = r;

@@ -14,7 +14,8 @@ delib.module {
     );
   };
 
-  nixos.always.nix.settings = {
+  # Importing OSA must not extend Nix's trust policy unless Walker is enabled.
+  nixos.ifEnabled.nix.settings = {
     extra-substituters = [
       "https://walker.cachix.org"
       "https://walker-git.cachix.org"
@@ -31,10 +32,8 @@ delib.module {
     programs.walker = {
       enable = true;
       runAsService = true;
-      # Переопределяем только font-family, сохраняя полный дефолтный стиль walker.
-      # Без этого `themes.default.style` полностью перезаписывал бы
-      # resources/themes/default/style.css (walker homeManager просто пишет файл),
-      # оставляя тему без всех правил — отсюда "сломана" тема и неестественно большой шрифт.
+      # Walker replaces its complete stylesheet when a theme style is set, so
+      # retain the upstream rules and append only the shared font override.
       themes.default.style =
         let
           baseStyle = builtins.readFile "${inputs.walker}/resources/themes/default/style.css";
@@ -42,7 +41,7 @@ delib.module {
         baseStyle
         + ''
 
-          /* OSA override: системный шрифт из user.fonts.regular */
+          /* OSA override: shared regular UI font. */
           * {
             font-family: "${myconfig.user.fonts.regular.name}", sans-serif;
           }
@@ -56,22 +55,5 @@ delib.module {
       systemctl --user try-restart elephant.service 2>/dev/null || true
       systemctl --user try-restart walker.service 2>/dev/null || true
     '';
-
-    # systemd.user.services.elephant = {
-    #   Unit = {
-    #     Description = "Elephant";
-    #     After = [ "graphical-session.target" ];
-    #   };
-
-    #   Service = {
-    #     Type = "simple";
-    #     ExecStart = "${pkgs.elephant}/bin/elephant";
-    #     Restart = "on-failure";
-    #   };
-
-    #   Install = {
-    #     WantedBy = [ "graphical-session.target" ];
-    #   };
-    # };
   };
 }

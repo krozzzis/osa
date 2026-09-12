@@ -18,7 +18,6 @@ delib.module {
     environment.systemPackages = with pkgs; [
       cage
       cosmic-greeter
-      seahorse
     ];
   };
 }

@@ -4,7 +4,7 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.ui.transparency = lib.mkOption {
-      type = lib.types.float;
+      type = lib.types.addCheck lib.types.float (value: value >= 0.0 && value <= 1.0);
       default = myconfig.user.ui.transparency;
       defaultText = lib.literalExpression "myconfig.user.ui.transparency";
       description = "Global UI transparency (0.0 fully transparent, 1.0 fully opaque) for all OSA apps. Defaults to user.ui.transparency (0.9 = 90%).";
@@ -32,8 +32,7 @@ delib.module {
     };
   };
 
-  # Глобальные шрифты: ставим пакеты из user.fonts в систему,
-  # иначе fallback-шрифт выглядит неестественно большим (как в walker после слома темы).
+  # Install shared fonts system-wide so applications use consistent fallbacks.
   nixos.always = { myconfig, ... }: {
     fonts.packages = [
       myconfig.user.fonts.regular.pkg

@@ -73,13 +73,12 @@ delib.module {
       enable = true;
       extraPortals = with pkgs; [
         xdg-desktop-portal-gtk
-        xdg-desktop-portal-gnome # нужен для ScreenCast (запись экрана в OBS и т.п.)
+        xdg-desktop-portal-gnome # Provides ScreenCast for OBS and screen sharing.
       ];
     };
 
-    # Важно: GTK-портал не реализует ScreenCast, поэтому запись экрана
-    # (OBS, screen sharing) явно направляется на gnome-портал,
-    # а выбор файлов остаётся на GTK-портале.
+    # GTK does not implement ScreenCast, so route capture to GNOME while
+    # retaining GTK for file selection.
     xdg.portal.config = {
       niri = {
         default = [ "gtk" ];

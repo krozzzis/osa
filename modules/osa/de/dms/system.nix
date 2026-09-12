@@ -21,6 +21,7 @@ delib.module {
       libappindicator
       upower
       cups-pk-helper
+      seahorse
     ];
   };
 }

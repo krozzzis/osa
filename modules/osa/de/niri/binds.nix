@@ -15,7 +15,7 @@ delib.module {
         action."focus-column-right" = [ ];
         "cooldown-ms" = 150;
       };
-      # Дублируем для Super на случай winit/совместимости (в niri Mod == Super)
+      # Keep an explicit Super binding for winit compatibility; Niri maps Mod to Super.
       "Super+WheelScrollLeft" = {
         action."focus-column-left" = [ ];
         "cooldown-ms" = 150;

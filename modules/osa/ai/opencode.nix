@@ -52,7 +52,7 @@ delib.module {
             todowrite = "allow";
           };
         };
-        # Прозрачная тема — без background, чтобы была видна прозрачность wezterm
+        # Leave the theme background unset so WezTerm transparency remains visible.
         themes.transparent = {
           theme = {
             primary = "#89b4fa";
