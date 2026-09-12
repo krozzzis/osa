@@ -15,16 +15,18 @@ let
     # fixed-output hash in the flake.
     vendorHash = "sha256-Ls6Dquwt0fzDCEjZ6FfTsZTXDI8408mFdByv/OWHVgI=";
     postPatch = (old.postPatch or "") + ''
-        substituteInPlace cmd/dms/commands_doctor.go \
-          --replace-fail \
-            'case osRelease["ID"] == "nixos":' \
-            'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
-        substituteInPlace quickshell/Common/SettingsData.qml \
+      substituteInPlace cmd/dms/commands_doctor.go \
+        --replace-fail \
+          'case osRelease["ID"] == "nixos":' \
+          'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
+    '';
+    postInstall = (old.postInstall or "") + ''
+        substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
           --replace-fail \
             'property var workspaceNameIcons: ({})' \
             'property var workspaceNameIcons: ({})
       property var workspaceNames: []'
-        substituteInPlace quickshell/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
+        substituteInPlace $out/share/quickshell/dms/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
           --replace-fail \
             'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);' \
             'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);
