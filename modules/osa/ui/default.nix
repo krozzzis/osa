@@ -1,4 +1,9 @@
-{ delib, lib, ... }:
+{
+  delib,
+  lib,
+  pkgs,
+  ...
+}:
 delib.module {
   name = "osa.ui";
 
@@ -32,12 +37,53 @@ delib.module {
     };
   };
 
-  # Install shared fonts system-wide so applications use consistent fallbacks.
+  # Install shared fonts and fallbacks system-wide.
   nixos.always = { myconfig, ... }: {
-    fonts.packages = [
-      myconfig.user.fonts.regular.pkg
-      myconfig.user.fonts.monospace.pkg
-    ];
+    fonts = {
+      packages =
+        (with pkgs; [
+          noto-fonts
+          noto-fonts-cjk-sans
+          noto-fonts-cjk-serif
+          noto-fonts-color-emoji
+          liberation_ttf
+          twemoji-color-font
+          myconfig.user.fonts.regular.pkg
+          myconfig.user.fonts.monospace.pkg
+        ])
+        ++ lib.optionals myconfig.user.gui.fonts.nerdfonts (
+          with pkgs;
+          [
+            nerd-fonts.fira-code
+            nerd-fonts.jetbrains-mono
+            nerd-fonts.symbols-only
+          ]
+        );
+
+      fontconfig.defaultFonts = {
+        serif = [
+          "Noto Serif"
+          "Noto Serif CJK SC"
+        ];
+        sansSerif = [
+          myconfig.user.fonts.regular.name
+          "Noto Sans CJK SC"
+        ];
+        monospace = [
+          (
+            if myconfig.user.gui.fonts.nerdfonts then
+              "JetBrainsMono Nerd Font"
+            else
+              myconfig.user.fonts.monospace.name
+          )
+          "Noto Sans Mono CJK SC"
+        ];
+        emoji = [
+          "Twemoji Mozilla"
+          "Noto Color Emoji"
+        ];
+      };
+    };
   };
 
   home.always =
@@ -45,10 +91,43 @@ delib.module {
     lib.mkIf myconfig.user.gui.enable {
       gtk = {
         enable = true;
+        font = {
+          name = myconfig.user.fonts.regular.name;
+          size = myconfig.user.ui.fontSize;
+        };
         iconTheme = {
           package = myconfig.user.ui.iconTheme.pkg;
           name = myconfig.user.ui.iconTheme.name;
         };
       };
+
+      qt = {
+        enable = true;
+        platformTheme.name = "qtct";
+      };
+
+      # Niri uses the KDE platform theme for Qt applications.
+      xdg.configFile."kdeglobals".text =
+        let
+          size = toString myconfig.user.ui.fontSize;
+          font = "${myconfig.user.fonts.regular.name},${size},-1,5,50,0,0,0,0,0";
+          fixedFont = "${myconfig.user.fonts.monospace.name},${size},-1,5,50,0,0,0,0,0";
+        in
+        ''
+          [General]
+          fixed=${fixedFont}
+          font=${font}
+          menuFont=${font}
+          smallestReadableFont=${font}
+          toolBarFont=${font}
+
+          [WM]
+          activeFont=${font}
+        '';
+
+      home.packages = [
+        myconfig.user.fonts.regular.pkg
+        myconfig.user.fonts.monospace.pkg
+      ];
     };
 }

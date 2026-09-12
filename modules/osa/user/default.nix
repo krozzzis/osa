@@ -182,6 +182,12 @@ delib.module {
       description = "Global UI transparency (0.0 fully transparent, 1.0 fully opaque) used for all supported apps (DMS, etc.)";
     };
 
+    user.ui.fontSize = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 11;
+      description = "Global UI font size in points used by supported GUI toolkits.";
+    };
+
     user.ui.iconTheme = lib.mkOption {
       type = iconThemeType;
       default = {
