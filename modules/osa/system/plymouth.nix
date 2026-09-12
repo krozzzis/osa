@@ -10,6 +10,9 @@ delib.module {
 
   options = { ... }: {
     osa.system.plymouth.enable = delib.boolOption false;
+    osa.system.plymouth.pkg =
+      delib.packageOption
+        inputs.plymouth-theme-material.packages.${pkgs.stdenv.hostPlatform.system}.plymouth-theme-material;
     osa.system.plymouth.theme = lib.mkOption {
       type = lib.types.str;
       default = "material";
@@ -22,17 +25,19 @@ delib.module {
     };
   };
 
-  nixos.ifEnabled = { cfg, myconfig, ... }: {
+  nixos.ifEnabled = { cfg, ... }: {
     boot.plymouth.enable = true;
     boot.plymouth.theme = lib.mkDefault cfg.theme;
     # The theme is fixed and tested in its own repository. Keep one authoritative
     # `material` directory in the initrd, including for downstream hosts that
     # still add the old package explicitly.
     boot.plymouth.themePackages = lib.mkForce [
-      inputs.plymouth-theme-material.packages.${pkgs.stdenv.hostPlatform.system}.plymouth-theme-material
+      cfg.pkg
     ];
     boot.plymouth.logo = lib.mkDefault cfg.logo;
-    boot.plymouth.font = lib.mkDefault "${myconfig.user.fonts.regular.pkg}/share/fonts/truetype/InterVariable.ttf";
+    boot.plymouth.font = lib.mkDefault (
+      cfg.pkg.font or "${pkgs.rubik}/share/fonts/truetype/Rubik-Regular.ttf"
+    );
 
     # Keep the handoff to the shutdown splash visually clean.  Plymouth can
     # only take DRM ownership after the compositor has released it, so there
