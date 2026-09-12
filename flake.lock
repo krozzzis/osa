@@ -649,11 +649,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789203882,
-        "narHash": "sha256-cGZ1vRWbNAxcK2p8UEsv8MvP6K8Hx1ZQYq8uI/sG0Ms=",
+        "lastModified": 1789207938,
+        "narHash": "sha256-TzRKySl6fEfuVOZpvjXJsofrd8JPH7OGc5ZTuUOgu2U=",
         "owner": "krozzzis",
         "repo": "plymouth-theme-material",
-        "rev": "11e3b0558622150c1e1127f911f8e3fe995c7e25",
+        "rev": "cb09c140ba0ff538ff54b78788db6612c3bd026e",
         "type": "github"
       },
       "original": {
