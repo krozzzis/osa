@@ -19,6 +19,13 @@ let
       # fixup, so drop only those links while preserving all valid aliases.
       chmod -R u+w "$out/share/icons/Conflux"
       find "$out/share/icons/Conflux" -type l ! -exec test -e {} \; -delete
+
+      # Nautilus requests `starred-symbolic` for its sidebar.  Conflux inherits
+      # Adwaita but does not package that icon, so the inherited parent is not
+      # available when Conflux is installed on its own.
+      install -Dm444 \
+        "${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/status/starred-symbolic.svg" \
+        "$out/share/icons/Conflux/status/symbolic/starred-symbolic.svg"
     '';
   };
 in
