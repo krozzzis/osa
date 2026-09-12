@@ -5,14 +5,29 @@
   pkgs,
   ...
 }:
+let
+  materialPackage =
+    inputs.plymouth-theme-material.packages.${pkgs.stdenv.hostPlatform.system}.plymouth-theme-material;
+  osaMaterialPackage = materialPackage.override {
+    settings.palette = {
+      background = "#14130b";
+      surface = "#211f15";
+      outline = "#494632";
+      accent = "#e5c75a";
+      onSurface = "#eee9cf";
+      muted = "#cbc4a5";
+      input = "#14130b";
+      inputOutline = "#cdbb68";
+      badge = "#39351c";
+    };
+  };
+in
 delib.module {
   name = "osa.system.plymouth";
 
   options = { ... }: {
     osa.system.plymouth.enable = delib.boolOption false;
-    osa.system.plymouth.pkg =
-      delib.packageOption
-        inputs.plymouth-theme-material.packages.${pkgs.stdenv.hostPlatform.system}.plymouth-theme-material;
+    osa.system.plymouth.pkg = delib.packageOption osaMaterialPackage;
     osa.system.plymouth.theme = lib.mkOption {
       type = lib.types.str;
       default = "material";
