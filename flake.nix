@@ -74,6 +74,10 @@
         quickshell.follows = "quickshell";
       };
     };
+    conflux-icon-theme = {
+      url = "github:MoshiurRahmanAdib/Conflux-Icon-Theme";
+      flake = false;
+    };
     denix = {
       url = "github:yunfachi/denix";
       inputs = {

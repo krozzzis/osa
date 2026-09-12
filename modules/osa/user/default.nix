@@ -17,6 +17,19 @@
   ...
 }:
 let
+  iconThemeType = lib.types.submodule {
+    options = {
+      pkg = lib.mkOption {
+        type = lib.types.package;
+        description = "Icon theme package.";
+      };
+      name = lib.mkOption {
+        type = lib.types.nonEmptyStr;
+        description = "Icon theme name as declared by its index.theme file.";
+      };
+    };
+  };
+
   # Editor handles are usually complete `osa.editor.*` module attrsets. Keep
   # their extra fields (`enable`, settings, …), while enforcing the one field
   # every consumer relies on.
@@ -172,6 +185,15 @@ delib.module {
       type = lib.types.float;
       default = 0.95;
       description = "Global UI transparency (0.0 fully transparent, 1.0 fully opaque) used for all supported apps (DMS, etc.)";
+    };
+
+    user.ui.iconTheme = lib.mkOption {
+      type = iconThemeType;
+      default = {
+        pkg = myconfig.osa.ui.conflux.pkg;
+        name = "Conflux";
+      };
+      description = "Icon theme handle used by GTK applications. Defaults to Conflux.";
     };
 
     user.ui.cornerRadius = lib.mkOption {

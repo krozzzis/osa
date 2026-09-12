@@ -49,6 +49,22 @@
         "type": "github"
       }
     },
+    "conflux-icon-theme": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789153483,
+        "narHash": "sha256-SDwxkxV0QdOfkJalM1MQClCdbf3yyF917QGm5JQqJH8=",
+        "owner": "MoshiurRahmanAdib",
+        "repo": "Conflux-Icon-Theme",
+        "rev": "b30b0b3d25d6943d970653af23b16c7b1d15506d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MoshiurRahmanAdib",
+        "repo": "Conflux-Icon-Theme",
+        "type": "github"
+      }
+    },
     "dank-qml-common": {
       "flake": false,
       "locked": {
@@ -710,6 +726,7 @@
     "root": {
       "inputs": {
         "caelestia-shell": "caelestia-shell",
+        "conflux-icon-theme": "conflux-icon-theme",
         "denix": "denix",
         "dms": "dms",
         "dms-plugin-registry": "dms-plugin-registry",

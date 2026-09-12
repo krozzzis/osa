@@ -40,4 +40,16 @@ delib.module {
       myconfig.user.fonts.monospace.pkg
     ];
   };
+
+  home.always =
+    { myconfig, ... }:
+    lib.mkIf myconfig.user.gui.enable {
+      gtk = {
+        enable = true;
+        iconTheme = {
+          package = myconfig.user.ui.iconTheme.pkg;
+          name = myconfig.user.ui.iconTheme.name;
+        };
+      };
+    };
 }
