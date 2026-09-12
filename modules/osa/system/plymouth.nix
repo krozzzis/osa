@@ -9,6 +9,7 @@ let
   materialPackage =
     inputs.plymouth-theme-material.packages.${pkgs.stdenv.hostPlatform.system}.plymouth-theme-material;
   osaMaterialPackage = materialPackage.override {
+    settings.logoSize = 96;
     settings.palette = {
       background = "#14130b";
       surface = "#211f15";
@@ -36,7 +37,7 @@ delib.module {
     osa.system.plymouth.logo = lib.mkOption {
       type = lib.types.path;
       default = ../../../assets/osa-logo-yellow.png;
-      description = "Logo displayed by plymouth (PNG, 48x48 is GDM default but any size works). Yellow on transparent, 1/4 size for plymouth watermark.";
+      description = "Logo displayed by Plymouth. OSA renders it at up to 96x96 pixels by default.";
     };
   };
 
