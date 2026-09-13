@@ -22,6 +22,10 @@ delib.module {
       blurEnabled = true;
       fontFamily = myconfig.user.fonts.regular.name;
       monoFontFamily = myconfig.user.fonts.monospace.name;
+      # Keep DMS's own resolver and the GTK session on the same icon theme.
+      iconThemeDark = myconfig.user.ui.iconTheme.name;
+      iconThemeLight = myconfig.user.ui.iconTheme.name;
+      iconThemePerMode = false;
       workspaceNames = myconfig.user.ui.workspaces;
     };
   };

@@ -22,6 +22,7 @@ delib.module {
       upower
       cups-pk-helper
       seahorse
+      xdg-terminal-exec
     ];
   };
 }

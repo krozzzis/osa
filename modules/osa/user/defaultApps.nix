@@ -15,6 +15,7 @@ delib.module {
       type = osaTypes.app;
       default = {
         pkg = myconfig.osa.terminal.wezterm.pkg;
+        desktop = "org.wezfurlong.wezterm.desktop";
       };
       description = "Default terminal application.";
     };

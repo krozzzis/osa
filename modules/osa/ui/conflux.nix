@@ -20,12 +20,19 @@ let
       chmod -R u+w "$out/share/icons/Conflux"
       find "$out/share/icons/Conflux" -type l ! -exec test -e {} \; -delete
 
-      # Nautilus requests `starred-symbolic` for its sidebar.  Conflux inherits
-      # Adwaita but does not package that icon, so the inherited parent is not
-      # available when Conflux is installed on its own.
-      install -Dm444 \
-        "${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/status/starred-symbolic.svg" \
-        "$out/share/icons/Conflux/status/symbolic/starred-symbolic.svg"
+      # Keep Conflux as the selected theme, with MoreWaita filling in the
+      # application and system icons it does not provide.  MoreWaita follows
+      # the Adwaita visual language and itself relies on Adwaita for the core
+      # symbolic icons, so include both inherited themes in the same package.
+      ln -s "${pkgs.morewaita-icon-theme}/share/icons/MoreWaita" \
+        "$out/share/icons/MoreWaita"
+      ln -s "${pkgs.adwaita-icon-theme}/share/icons/Adwaita" \
+        "$out/share/icons/Adwaita"
+
+      # The upstream theme currently inherits only Adwaita.  Add MoreWaita
+      # ahead of it, preserving Conflux as the first lookup source.
+      sed -i 's/^Inherits=.*/Inherits=MoreWaita,Adwaita,hicolor/' \
+        "$out/share/icons/Conflux/index.theme"
     '';
   };
 in

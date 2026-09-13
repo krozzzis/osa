@@ -9,11 +9,20 @@ delib.module {
   name = "osa.de.dms";
 
   home.ifEnabled =
-    { cfg, ... }:
+    { cfg, myconfig, ... }:
     let
       hm = inputs.home-manager.lib.hm;
       declaredSettings = (pkgs.formats.json { }).generate "osa-dms-settings.json" cfg.settings;
       inherit (import ../../../../lib/mutable-settings.nix) jqMergeFilter;
+      terminalDesktop = myconfig.user.terminal.default.desktop or null;
+      terminalDesktopId =
+        if terminalDesktop != null then
+          terminalDesktop
+        else
+          "${
+            myconfig.user.terminal.default.pkg.meta.mainProgram
+              or (lib.getName myconfig.user.terminal.default.pkg)
+          }.desktop";
     in
     {
       programs.dank-material-shell = {
@@ -41,6 +50,10 @@ delib.module {
         "|XDG_CURRENT_DESKTOP=niri"
         "|XDG_CURRENT_DESKTOP=driftwm"
       ];
+
+      # xdg-terminal-exec selects the first usable desktop entry from this
+      # list.  Keep it aligned with the public default-terminal handle.
+      xdg.configFile."xdg-terminals.list".text = "${terminalDesktopId}\n";
 
       home.activation.fixDmsSettings = hm.dag.entryBefore [ "linkGeneration" ] ''
         settings_file="$HOME/.config/DankMaterialShell/settings.json"
