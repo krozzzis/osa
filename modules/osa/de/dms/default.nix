@@ -41,6 +41,23 @@ let
                 workspaces = workspaces.filter(ws => order.has(ws.name));
                 workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
             }'
+          # Polkit messages often contain the executable path.  A Nix store
+          # hash is useful for reproducibility but is not a useful identity
+          # in an authentication dialog, so retain the package name instead.
+          substituteInPlace $out/share/quickshell/dms/Modals/PolkitAuthContent.qml \
+            --replace-fail \
+              'text: root.currentFlow?.message ?? ""' \
+              'text: (root.currentFlow?.message ?? "").replace(
+                /\\/nix\\/store\\/[0-9a-z]{32}-([^\\/\\s]+)(?:\\/[^\\s]*)?/g,
+                (_, packageName) => {
+                    const name = packageName.replace(/-[0-9][0-9A-Za-z.+-]*$/, "");
+                    return ({
+                        "gparted": "GParted",
+                        "nixos-rebuild": "NixOS Rebuild",
+                        "osa": "OSA"
+                    })[name] ?? name;
+                }
+              )'
     '';
   });
 in

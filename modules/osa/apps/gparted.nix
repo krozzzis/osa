@@ -10,16 +10,21 @@ delib.module {
     osa.apps.gparted.enable = delib.boolOption myconfig.user.gui.enable;
   };
 
+  nixos.ifEnabled = {
+    # GParted is installed only into the user's profile so its unprivileged
+    # desktop entry does not appear alongside our launcher.  Its polkit
+    # action, however, must be visible to the system daemon.  Register just
+    # that action: pkexec can then identify the request as GParted instead of
+    # rendering the Nix store path for the generic exec action.
+    environment.etc."polkit-1/actions/org.gnome.gparted.policy".source =
+      "${pkgs.gparted}/share/polkit-1/actions/org.gnome.gparted.policy";
+  };
+
   home.ifEnabled = {
     home.packages = with pkgs; [
-      # gparted's own polkit action (org.gnome.gparted, allow_gui=true)
-      # never actually applies here -- it's only registered with polkitd
-      # for packages listed in NixOS's own environment.systemPackages,
-      # and gparted isn't (deliberately: its own .desktop file execs the
-      # raw, non-elevated binary, so adding it there would give walker a
-      # second, broken "GParted" entry next to this one). So pkexec falls
-      # back to the generic exec action, which strips DISPLAY entirely --
-      # forward it ourselves.
+      # The system module registers GParted's own polkit action.  Besides a
+      # useful name and icon in authentication agents, its `allow_gui`
+      # annotation preserves DISPLAY for this legacy X11 client.
       #
       # That alone isn't enough either: this session's XWayland
       # (xwayland-satellite) enforces per-UID access control (`xhost`)
@@ -48,13 +53,7 @@ delib.module {
         # rules out `exec` here (an EXIT trap never fires across exec),
         # so run pkexec as a child and propagate its status explicitly.
         trap '${xhost}/bin/xhost -si:localuser:root >/dev/null 2>&1 || true' EXIT
-        # Absolute path, not bare `env`: this system's uutils-coreutils is
-        # hiPrio'd ahead of GNU coreutils on $PATH, and pkexec resolves
-        # PROGRAM through its own restricted lookup, which landed on
-        # uutils' multicall binary and choked on DISPLAY=:0 as if it were
-        # an applet name ("coreutils: unknown program"). Bypass all of
-        # that by baking in the real GNU coreutils env directly.
-        pkexec "${coreutils}/bin/env" DISPLAY="$DISPLAY" "${gparted}/bin/gparted" "$@"
+        pkexec "${gparted}/bin/gparted" "$@"
       '')
       # gparted's own .desktop file `Exec`s the raw (non-elevated)
       # binary directly, which is useless here since it needs pkexec.
