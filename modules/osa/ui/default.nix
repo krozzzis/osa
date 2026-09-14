@@ -124,6 +124,9 @@ delib.module {
           smallestReadableFont=${font}
           toolBarFont=${font}
 
+          [Icons]
+          Theme=${myconfig.user.ui.iconTheme.name}
+
           [WM]
           activeFont=${font}
         '';

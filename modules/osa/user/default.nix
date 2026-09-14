@@ -194,7 +194,7 @@ delib.module {
         pkg = myconfig.osa.ui.conflux.pkg;
         name = "Conflux";
       };
-      description = "Icon theme handle used by GTK applications. Defaults to Conflux.";
+      description = "Icon theme handle used by GTK, Qt/KDE and DMS applications. Defaults to Conflux.";
     };
 
     user.ui.cornerRadius = lib.mkOption {
