@@ -103,7 +103,10 @@ delib.module {
 
       qt = {
         enable = true;
-        platformTheme.name = "qtct";
+        # Keep this aligned with osa.de.niri: KDE reads the font declarations
+        # below from kdeglobals, while qtct would ignore them and use its own
+        # default font size.
+        platformTheme.name = "kde";
       };
 
       # Niri uses the KDE platform theme for Qt applications.
