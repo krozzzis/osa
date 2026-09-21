@@ -12,12 +12,44 @@ printf 'nix %s\n' "$*" >>"$OSA_TEST_LOG"
 EOF
 chmod +x "$work_dir/bin/nix"
 
+cat >"$work_dir/bin/nix-collect-garbage" <<'EOF'
+#!@bash@
+printf 'nix-collect-garbage %s\n' "$*" >>"$OSA_TEST_LOG"
+EOF
+chmod +x "$work_dir/bin/nix-collect-garbage"
+
+cat >"$work_dir/bin/home-manager" <<'EOF'
+#!@bash@
+printf 'home-manager %s\n' "$*" >>"$OSA_TEST_LOG"
+EOF
+chmod +x "$work_dir/bin/home-manager"
+
+cat >"$work_dir/bin/run0" <<'EOF'
+#!@bash@
+printf 'run0 %s\n' "$*" >>"$OSA_TEST_LOG"
+EOF
+chmod +x "$work_dir/bin/run0"
+
 export OSA_TEST_LOG="$work_dir/log"
 export PATH="$work_dir/bin:$PATH"
 
 bash @osaScript@ update --config "$work_dir/config" -- --refresh
 
 expected=$'nix run .#write-flake\nnix flake update --refresh\nnix run .#write-flake'
+actual=$(<"$OSA_TEST_LOG")
+[[ $actual == "$expected" ]]
+
+: >"$OSA_TEST_LOG"
+bash @osaScript@ update-osa --config "$work_dir/config" -- --refresh
+
+expected=$'nix run .#write-flake\nnix flake update osa --refresh\nnix run .#write-flake'
+actual=$(<"$OSA_TEST_LOG")
+[[ $actual == "$expected" ]]
+
+: >"$OSA_TEST_LOG"
+HOME="$work_dir/home-without-config" bash @osaScript@ clean
+
+expected=$'home-manager expire-generations now\nnix-collect-garbage --delete-old\nrun0 nix-collect-garbage --delete-old'
 actual=$(<"$OSA_TEST_LOG")
 [[ $actual == "$expected" ]]
 

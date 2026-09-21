@@ -58,16 +58,20 @@ command. It operates on a downstream configuration flake (by default
 
 ```bash
 osa update
+osa update-osa
 osa switch nixlaptop-niri
 osa update-switch nixlaptop-niri
 osa update-boot --config ~/other-config my-host
 osa build-iso pi-backup
 osa build-installer nixlaptop-niri
+osa clean
 ```
 
 `switch`, `boot`, `update-switch`, and `update-boot` use systemd's interactive
 `run0` privilege launcher for the `nixos-rebuild` step. Extra Nix arguments can
-be passed after `--`.
+be passed after `--`. `update-osa` updates only the downstream flake's `osa`
+input. `clean` removes old Home Manager and Nix generations, then runs the Nix
+garbage collector; it uses `run0` for the system-wide cleanup.
 
 ## Using OSA in your own configuration
 

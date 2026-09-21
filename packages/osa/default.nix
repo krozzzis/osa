@@ -4,6 +4,7 @@ let
     name = "osa";
     runtimeInputs = with pkgs; [
       coreutils
+      home-manager
       nix
       nixos-rebuild
       systemd
