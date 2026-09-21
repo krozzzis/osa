@@ -9,13 +9,38 @@ die() {
   exit 2
 }
 
-sudo_user=
+invoking_user=
 user_home=$HOME
-if ((EUID == 0)) && [[ -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
-  sudo_user=$SUDO_USER
-  passwd_entry=$(getent passwd "$sudo_user") || die "cannot resolve sudo user '$sudo_user'"
-  IFS=: read -r _ _ _ _ _ user_home _ <<<"$passwd_entry"
-  [[ -n $user_home ]] || die "sudo user '$sudo_user' has no home directory"
+if ((EUID == 0)); then
+  invoking_identity=
+
+  if [[ -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
+    # sudo and run0 both expose the originating user this way.
+    invoking_identity=$SUDO_USER
+  elif [[ -n ${DOAS_USER:-} && $DOAS_USER != root ]]; then
+    invoking_identity=$DOAS_USER
+  elif [[ -n ${PKEXEC_UID:-} && $PKEXEC_UID != 0 ]]; then
+    invoking_identity=$PKEXEC_UID
+  else
+    login_uid=
+    if [[ -r /proc/self/loginuid ]]; then
+      IFS= read -r login_uid </proc/self/loginuid || true
+    fi
+    if [[ $login_uid =~ ^[0-9]+$ && $login_uid != 0 && $login_uid != 4294967295 ]]; then
+      invoking_identity=$login_uid
+    else
+      login_user=$(logname 2>/dev/null || true)
+      [[ -n $login_user && $login_user != root ]] && invoking_identity=$login_user
+    fi
+  fi
+
+  if [[ -n $invoking_identity ]]; then
+    passwd_entry=$(getent passwd "$invoking_identity") \
+      || die "cannot resolve invoking user '$invoking_identity'"
+    IFS=: read -r invoking_user _ invoking_uid _ _ user_home _ <<<"$passwd_entry"
+    [[ -n $invoking_user && -n $user_home && $invoking_uid != 0 ]] \
+      || die "invalid invoking user '$invoking_identity'"
+  fi
 fi
 default_config_dir="${user_home}/osa-user"
 
@@ -51,9 +76,9 @@ EOF
 }
 
 run_unprivileged() {
-  if [[ -n $sudo_user ]]; then
-    runuser --user "$sudo_user" -- \
-      env HOME="$user_home" USER="$sudo_user" LOGNAME="$sudo_user" PATH="$PATH" "$@"
+  if [[ -n $invoking_user ]]; then
+    runuser --user "$invoking_user" -- \
+      env HOME="$user_home" USER="$invoking_user" LOGNAME="$invoking_user" PATH="$PATH" "$@"
   else
     "$@"
   fi
