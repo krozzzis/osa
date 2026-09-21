@@ -43,6 +43,7 @@ delib.host {
     osa.media.patchbay.enable = true;
     osa.media.vstPath.enable = true;
     osa.network.yggdrasil.enable = true;
+    osa.system.printing.enable = true;
     osa.shell.fzf.enable = true;
     osa.system.libvirtd.enable = true;
     osa.system.ntfs.enable = true;
