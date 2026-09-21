@@ -6,6 +6,8 @@ delib.module {
     osa.de.dms.greeter.enable = delib.boolOption myconfig.osa.de.dms.enable;
   };
 
+  myconfig.ifEnabled.osa.system.oo7.enable = true;
+
   nixos.ifEnabled = { myconfig, ... }: {
     services = {
       displayManager.dms-greeter = {
@@ -18,5 +20,6 @@ delib.module {
       power-profiles-daemon.enable = lib.mkDefault true;
     };
     security.polkit.enable = lib.mkDefault true;
+    security.pam.services.dms-greeter.oo7.enable = true;
   };
 }

@@ -67,8 +67,6 @@ delib.module {
 
     environment.variables.QT_QPA_PLATFORMTHEME = "kde";
 
-    environment.sessionVariables.SSH_AUTH_SOCK = "\${XDG_RUNTIME_DIR}/keyring/ssh";
-
     xdg.portal = {
       enable = true;
       extraPortals = with pkgs; [

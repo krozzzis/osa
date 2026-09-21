@@ -8,6 +8,8 @@ delib.module {
 
   options = delib.singleEnableOption false;
 
+  myconfig.ifEnabled.osa.system.oo7.enable = true;
+
   nixos.always.imports = [ inputs.silentSDDM.nixosModules.default ];
 
   nixos.ifEnabled = {
@@ -15,7 +17,7 @@ delib.module {
       enable = true;
       wayland.enable = true;
     };
-    security.pam.services.sddm.enableGnomeKeyring = true;
+    security.pam.services.sddm.oo7.enable = true;
 
     programs.silentSDDM = {
       enable = true;
