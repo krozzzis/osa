@@ -30,7 +30,20 @@ printf 'run0 %s\n' "$*" >>"$OSA_TEST_LOG"
 EOF
 chmod +x "$work_dir/bin/run0"
 
+cat >"$work_dir/bin/getent" <<'EOF'
+#!@bash@
+printf 'tester:x:1000:100::%s:/bin/bash\n' "$OSA_TEST_USER_HOME"
+EOF
+chmod +x "$work_dir/bin/getent"
+
+cat >"$work_dir/bin/runuser" <<'EOF'
+#!@bash@
+printf 'runuser %s\n' "$*" >>"$OSA_TEST_LOG"
+EOF
+chmod +x "$work_dir/bin/runuser"
+
 export OSA_TEST_LOG="$work_dir/log"
+export OSA_TEST_USER_HOME="$work_dir/tester"
 export PATH="$work_dir/bin:$PATH"
 
 bash @osaScript@ update --config "$work_dir/config" -- --refresh
@@ -50,6 +63,16 @@ actual=$(<"$OSA_TEST_LOG")
 HOME="$work_dir/home-without-config" bash @osaScript@ clean
 
 expected=$'home-manager expire-generations now\nnix-collect-garbage --delete-old\nrun0 nix-collect-garbage --delete-old'
+actual=$(<"$OSA_TEST_LOG")
+[[ $actual == "$expected" ]]
+
+: >"$OSA_TEST_LOG"
+sed 's/EUID == 0/0 == 0/g' @osaScript@ >"$work_dir/osa-as-root"
+SUDO_USER=tester HOME="$work_dir/root" bash "$work_dir/osa-as-root" clean
+
+expected="runuser --user tester -- env HOME=$work_dir/tester USER=tester LOGNAME=tester PATH=$PATH home-manager expire-generations now
+runuser --user tester -- env HOME=$work_dir/tester USER=tester LOGNAME=tester PATH=$PATH nix-collect-garbage --delete-old
+nix-collect-garbage --delete-old"
 actual=$(<"$OSA_TEST_LOG")
 [[ $actual == "$expected" ]]
 

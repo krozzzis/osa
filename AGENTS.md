@@ -98,8 +98,10 @@ nix eval .#nixosConfigurations.nixlaptop.config.system.build.toplevel.drvPath \
 ## CLI and privileges
 
 The default-enabled `osa.system.osa-cli` module installs `osa`. It uses
-`~/osa-user` unless `--config` overrides the path. Run it as the normal user;
-only `nixos-rebuild switch` and `boot` are elevated through systemd `run0`.
+`~/osa-user` unless `--config` overrides the path. When run as a normal user,
+privileged operations are elevated through systemd `run0`. Under `sudo`, it
+uses `SUDO_USER` for user-level operations and runs privileged operations
+directly.
 
 ```bash
 osa update

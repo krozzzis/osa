@@ -3,7 +3,21 @@
 set -euo pipefail
 
 program=${0##*/}
-default_config_dir="${HOME}/osa-user"
+
+die() {
+  echo "$program: error: $*" >&2
+  exit 2
+}
+
+sudo_user=
+user_home=$HOME
+if ((EUID == 0)) && [[ -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
+  sudo_user=$SUDO_USER
+  passwd_entry=$(getent passwd "$sudo_user") || die "cannot resolve sudo user '$sudo_user'"
+  IFS=: read -r _ _ _ _ _ user_home _ <<<"$passwd_entry"
+  [[ -n $user_home ]] || die "sudo user '$sudo_user' has no home directory"
+fi
+default_config_dir="${user_home}/osa-user"
 
 usage() {
   cat <<EOF
@@ -36,13 +50,25 @@ Examples:
 EOF
 }
 
-die() {
-  echo "$program: error: $*" >&2
-  exit 2
+run_unprivileged() {
+  if [[ -n $sudo_user ]]; then
+    runuser --user "$sudo_user" -- \
+      env HOME="$user_home" USER="$sudo_user" LOGNAME="$sudo_user" PATH="$PATH" "$@"
+  else
+    "$@"
+  fi
 }
 
 run_in_config() {
-  (cd "$config_dir" && "$@")
+  (cd "$config_dir" && run_unprivileged "$@")
+}
+
+run_privileged() {
+  if ((EUID == 0)); then
+    "$@"
+  else
+    run0 "$@"
+  fi
 }
 
 write_flake() {
@@ -71,18 +97,18 @@ update_flake() {
 
 clean_system() {
   echo "==> Deleting old Home Manager generations" >&2
-  home-manager expire-generations now
+  run_unprivileged home-manager expire-generations now
   echo "==> Deleting old user Nix generations and collecting garbage" >&2
-  nix-collect-garbage --delete-old
+  run_unprivileged nix-collect-garbage --delete-old
   echo "==> Deleting old system Nix generations and collecting garbage" >&2
-  run0 nix-collect-garbage --delete-old
+  run_privileged nix-collect-garbage --delete-old
 }
 
 rebuild() {
   local action=$1
   write_flake
   echo "==> Running nixos-rebuild $action for $configuration" >&2
-  run0 nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
+  run_privileged nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
 }
 
 flake_has_attr() {
@@ -155,7 +181,7 @@ while (($#)); do
 done
 
 if [[ $command != clean && $command != help ]]; then
-  config_dir=${config_dir/#\~/$HOME}
+  config_dir=${config_dir/#\~/$user_home}
   [[ -d $config_dir ]] || die "configuration directory '$config_dir' does not exist"
   config_dir=$(cd "$config_dir" && pwd -P)
   [[ -f $config_dir/flake.nix ]] || die "'$config_dir' is not a flake directory"
@@ -179,7 +205,7 @@ case $command in
     update_flake
     # update_flake has already generated flake.nix from the updated inputs.
     echo "==> Running nixos-rebuild ${command#update-} for $configuration" >&2
-    run0 nixos-rebuild "${command#update-}" --flake "$config_dir#$configuration" "${extra_args[@]}"
+    run_privileged nixos-rebuild "${command#update-}" --flake "$config_dir#$configuration" "${extra_args[@]}"
     ;;
   build-iso)
     [[ -n $configuration ]] || die "$command requires a configuration name"

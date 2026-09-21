@@ -68,10 +68,13 @@ osa clean
 ```
 
 `switch`, `boot`, `update-switch`, and `update-boot` use systemd's interactive
-`run0` privilege launcher for the `nixos-rebuild` step. Extra Nix arguments can
-be passed after `--`. `update-osa` updates only the downstream flake's `osa`
-input. `clean` removes old Home Manager and Nix generations, then runs the Nix
-garbage collector; it uses `run0` for the system-wide cleanup.
+`run0` privilege launcher for the `nixos-rebuild` step. The CLI also supports
+`sudo osa ...`: it uses `SUDO_USER` for the configuration and user-level work,
+while privileged commands run directly without another authentication prompt.
+Extra Nix arguments can be passed after `--`. `update-osa` updates only the
+downstream flake's `osa` input. `clean` removes old Home Manager and Nix
+generations, then runs the Nix garbage collector; it uses the same privilege
+handling for the system-wide cleanup.
 
 ## Using OSA in your own configuration
 

@@ -4,10 +4,12 @@ let
     name = "osa";
     runtimeInputs = with pkgs; [
       coreutils
+      glibc.bin
       home-manager
       nix
       nixos-rebuild
       systemd
+      util-linux
     ];
     text = builtins.readFile ../../scripts/osa/osa.sh;
   };
