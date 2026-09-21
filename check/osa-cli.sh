@@ -32,7 +32,7 @@ chmod +x "$work_dir/bin/run0"
 
 cat >"$work_dir/bin/getent" <<'EOF'
 #!@bash@
-printf 'tester:x:1000:100::%s:/bin/bash\n' "$OSA_TEST_USER_HOME"
+printf 'tester:x:%s:100::%s:/bin/bash\n' "$2" "$OSA_TEST_USER_HOME"
 EOF
 chmod +x "$work_dir/bin/getent"
 
@@ -41,12 +41,6 @@ cat >"$work_dir/bin/runuser" <<'EOF'
 printf 'runuser %s\n' "$*" >>"$OSA_TEST_LOG"
 EOF
 chmod +x "$work_dir/bin/runuser"
-
-cat >"$work_dir/bin/logname" <<'EOF'
-#!@bash@
-printf 'tester\n'
-EOF
-chmod +x "$work_dir/bin/logname"
 
 export OSA_TEST_LOG="$work_dir/log"
 export OSA_TEST_USER_HOME="$work_dir/tester"
@@ -78,24 +72,15 @@ expected_elevated_clean="runuser --user tester -- env HOME=$work_dir/tester USER
 runuser --user tester -- env HOME=$work_dir/tester USER=tester LOGNAME=tester PATH=$PATH nix-collect-garbage --delete-old
 nix-collect-garbage --delete-old"
 
-assert_elevated_clean() {
-  local elevation=$1
+HOME="$work_dir/root" bash "$work_dir/osa-as-root" \
+  clean --config "$work_dir/config"
+actual=$(<"$OSA_TEST_LOG")
+[[ $actual == "$expected_elevated_clean" ]]
 
-  : >"$OSA_TEST_LOG"
-  shift
-  env -u SUDO_USER -u DOAS_USER -u PKEXEC_UID "$@" \
-    HOME="$work_dir/root" bash "$work_dir/osa-as-root" clean
-  actual=$(<"$OSA_TEST_LOG")
-  if [[ $actual != "$expected_elevated_clean" ]]; then
-    echo "osa failed the $elevation invocation test" >&2
-    exit 1
-  fi
-}
-
-assert_elevated_clean sudo SUDO_USER=tester
-assert_elevated_clean doas DOAS_USER=tester
-assert_elevated_clean pkexec PKEXEC_UID=1000
-assert_elevated_clean loginuid
+if HOME="$work_dir/root" bash "$work_dir/osa-as-root" clean 2>/dev/null; then
+  echo "osa accepted a root invocation without --config" >&2
+  exit 1
+fi
 
 if bash @osaScript@ update --config "$work_dir/missing" 2>/dev/null; then
   echo "osa accepted a missing configuration directory" >&2

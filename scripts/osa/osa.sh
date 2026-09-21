@@ -11,37 +11,6 @@ die() {
 
 invoking_user=
 user_home=$HOME
-if ((EUID == 0)); then
-  invoking_identity=
-
-  if [[ -n ${SUDO_USER:-} && $SUDO_USER != root ]]; then
-    # sudo and run0 both expose the originating user this way.
-    invoking_identity=$SUDO_USER
-  elif [[ -n ${DOAS_USER:-} && $DOAS_USER != root ]]; then
-    invoking_identity=$DOAS_USER
-  elif [[ -n ${PKEXEC_UID:-} && $PKEXEC_UID != 0 ]]; then
-    invoking_identity=$PKEXEC_UID
-  else
-    login_uid=
-    if [[ -r /proc/self/loginuid ]]; then
-      IFS= read -r login_uid </proc/self/loginuid || true
-    fi
-    if [[ $login_uid =~ ^[0-9]+$ && $login_uid != 0 && $login_uid != 4294967295 ]]; then
-      invoking_identity=$login_uid
-    else
-      login_user=$(logname 2>/dev/null || true)
-      [[ -n $login_user && $login_user != root ]] && invoking_identity=$login_user
-    fi
-  fi
-
-  if [[ -n $invoking_identity ]]; then
-    passwd_entry=$(getent passwd "$invoking_identity") \
-      || die "cannot resolve invoking user '$invoking_identity'"
-    IFS=: read -r invoking_user _ invoking_uid _ _ user_home _ <<<"$passwd_entry"
-    [[ -n $invoking_user && -n $user_home && $invoking_uid != 0 ]] \
-      || die "invalid invoking user '$invoking_identity'"
-  fi
-fi
 default_config_dir="${user_home}/osa-user"
 
 usage() {
@@ -171,6 +140,7 @@ fi
 command=$1
 shift
 config_dir=$default_config_dir
+config_explicit=false
 configuration=
 extra_args=()
 
@@ -179,10 +149,12 @@ while (($#)); do
     -c|--config)
       (($# >= 2)) || die "$1 requires a path"
       config_dir=$2
+      config_explicit=true
       shift 2
       ;;
     --config=*)
       config_dir=${1#*=}
+      config_explicit=true
       shift
       ;;
     -h|--help)
@@ -205,11 +177,29 @@ while (($#)); do
   esac
 done
 
-if [[ $command != clean && $command != help ]]; then
+needs_config=true
+[[ $command == clean || $command == help ]] && needs_config=false
+
+if ((EUID == 0)) && [[ $command != help ]]; then
+  [[ $config_explicit == true ]] || die "running as root requires --config PATH"
+  needs_config=true
+fi
+
+if [[ $needs_config == true ]]; then
   config_dir=${config_dir/#\~/$user_home}
   [[ -d $config_dir ]] || die "configuration directory '$config_dir' does not exist"
   config_dir=$(cd "$config_dir" && pwd -P)
   [[ -f $config_dir/flake.nix ]] || die "'$config_dir' is not a flake directory"
+fi
+
+if ((EUID == 0)) && [[ $command != help ]]; then
+  config_uid=$(stat -c %u "$config_dir")
+  [[ $config_uid != 0 ]] || die "configuration directory '$config_dir' must be owned by a non-root user"
+  passwd_entry=$(getent passwd "$config_uid") \
+    || die "cannot resolve owner of configuration directory '$config_dir'"
+  IFS=: read -r invoking_user _ invoking_uid _ _ user_home _ <<<"$passwd_entry"
+  [[ -n $invoking_user && -n $user_home && $invoking_uid == "$config_uid" ]] \
+    || die "invalid owner of configuration directory '$config_dir'"
 fi
 
 case $command in
