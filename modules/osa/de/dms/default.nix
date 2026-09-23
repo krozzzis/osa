@@ -13,7 +13,7 @@ let
   dmsPackage = (inputs.dms.lib.mkDmsShell pkgs).overrideAttrs (old: {
     # DMS stable aa4b99d changed its Go dependencies without updating the
     # fixed-output hash in the flake.
-    vendorHash = "sha256-Ls6Dquwt0fzDCEjZ6FfTsZTXDI8408mFdByv/OWHVgI=";
+    vendorHash = "sha256-ejDi+TzstUtxtWpcl5yYw4UZuTnZraOsIdJuXPKxJ6s=";
     postPatch = (old.postPatch or "") + ''
       substituteInPlace cmd/dms/commands_doctor.go \
         --replace-fail \
