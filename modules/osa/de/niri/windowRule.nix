@@ -40,6 +40,13 @@ delib.module {
 
         {
           matches = [
+            { title = "^Open File$"; }
+          ];
+          open-floating = true;
+        }
+
+        {
+          matches = [
             { app-id = "scrcpy"; }
           ];
           open-floating = true;
