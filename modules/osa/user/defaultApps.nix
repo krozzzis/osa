@@ -61,7 +61,8 @@ delib.module {
     user.pdfViewer.default = lib.mkOption {
       type = osaTypes.app;
       default = {
-        pkg = myconfig.osa.apps.cosmic.reader.pkg;
+        pkg = myconfig.osa.apps.papers.pkg;
+        desktop = "org.gnome.Papers.desktop";
       };
       description = "Default PDF viewer.";
     };
