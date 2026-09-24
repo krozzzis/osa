@@ -48,7 +48,7 @@ let
             --replace-fail \
               'text: root.currentFlow?.message ?? ""' \
               'text: (root.currentFlow?.message ?? "").replace(
-                /\\/nix\\/store\\/[0-9a-z]{32}-([^\\/\\s]+)(?:\\/[^\\s]*)?/g,
+                /\/nix\/store\/[0-9a-z]{32}-([^\/\s]+)(?:\/[^\s]*)?/g,
                 (_, packageName) => {
                     const name = packageName.replace(/-[0-9][0-9A-Za-z.+-]*$/, "");
                     return ({

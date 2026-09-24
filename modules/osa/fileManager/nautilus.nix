@@ -24,7 +24,7 @@ delib.module {
     boot.supportedFilesystems = [ "ntfs" ];
   };
 
-  home.ifEnabled = { config, ... }: {
+  home.ifEnabled = { myconfig, ... }: {
     xdg.userDirs = {
       enable = true;
       createDirectories = true;
@@ -32,8 +32,8 @@ delib.module {
 
     # GTK file managers, including Nautilus, read this shared bookmarks file.
     xdg.configFile."gtk-3.0/bookmarks".text = ''
-      file://${config.home.homeDirectory}/Downloads Downloads
-      file://${config.home.homeDirectory}/Documents Documents
+      file:///home/${myconfig.user.constants.username}/Downloads Downloads
+      file:///home/${myconfig.user.constants.username}/Documents Documents
     '';
   };
 
