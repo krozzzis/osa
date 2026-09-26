@@ -97,6 +97,17 @@ delib.host {
               message = "MIME defaults must use concrete types, not wildcard categories.";
             }
             {
+              assertion =
+                !(builtins.elem home.programs.zed-editor.package home.home.packages)
+                &&
+                  lib.length (
+                    builtins.filter (
+                      pkg: lib.hasPrefix "zed-editor-wrapped-" (lib.getName pkg + "-" + lib.getVersion pkg)
+                    ) home.home.packages
+                  ) == 1;
+              message = "Zed must be installed once through Home Manager's wrapper, without the raw package.";
+            }
+            {
               assertion = builtins.elem "ru_RU.UTF-8/UTF-8" config.i18n.supportedLocales;
               message = "Wine profile locales must be generated on NixOS.";
             }

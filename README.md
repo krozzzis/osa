@@ -198,7 +198,8 @@ Within osa itself, each module's `inputs.nix` is picked up automatically by
 With `user.gui.enable`, OSA installs the packages selected by the typed
 `user.*.default` handles (and `user.editor.gui`) and configures Home Manager's
 `xdg.mimeApps`. Selecting a handle also installs its package when its module is
-disabled. Use the handle's `desktop` field for desktop IDs that differ from the
+disabled. When Home Manager manages Zed, its wrapper supplies the executable;
+OSA does not also install the unwrapped package. Use the handle's `desktop` field for desktop IDs that differ from the
 executable name, such as `org.gnome.Loupe.desktop` or `zen-beta.desktop`.
 
 Loupe is the default image viewer. Replace old `osa.apps.swayimg` references

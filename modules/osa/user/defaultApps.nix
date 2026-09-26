@@ -183,47 +183,60 @@ delib.module {
     environment.variables.EDITOR = lib.getExe myconfig.user.editor.default.pkg;
   };
 
-  home.always =
-    { myconfig, ... }:
-    let
-      user = myconfig.user;
-      apps = {
-        editor = user.editor.gui;
-        browser = user.browser.default;
-        fileManager = user.fileManager.default;
-        musicPlayer = user.musicPlayer.default;
-        videoPlayer = user.videoPlayer.default;
-        imageViewer = user.imageViewer.default;
-        pdfViewer = user.pdfViewer.default;
-      };
-      desktopId =
-        app:
-        if (app.desktop or null) != null then
-          app.desktop
-        else
-          "${app.pkg.meta.mainProgram or (lib.getName app.pkg)}.desktop";
-      associations = lib.mkMerge (
-        lib.mapAttrsToList (
-          category: app: lib.genAttrs user.defaultApps.mimeTypes.${category} (_: [ (desktopId app) ])
-        ) apps
-      );
-    in
-    lib.mkMerge [
-      { home.sessionVariables.EDITOR = lib.getExe user.editor.default.pkg; }
-      (lib.mkIf user.gui.enable {
-        # Handles are authoritative even when the corresponding module is disabled.
-        home.packages = lib.unique (
-          map (app: app.pkg) (builtins.attrValues apps ++ [ user.terminal.default ])
-        );
-        home.sessionVariables = {
-          BROWSER = lib.getExe user.browser.default.pkg;
-          TERMINAL = lib.getExe user.terminal.default.pkg;
-        };
-        xdg.mimeApps = {
-          enable = true;
-          defaultApplications = associations;
-          associations.added = associations;
-        };
-      })
+  home.always = { myconfig, ... }: {
+    imports = [
+      (
+        { config, ... }:
+        let
+          user = myconfig.user;
+          apps = {
+            editor = user.editor.gui;
+            browser = user.browser.default;
+            fileManager = user.fileManager.default;
+            musicPlayer = user.musicPlayer.default;
+            videoPlayer = user.videoPlayer.default;
+            imageViewer = user.imageViewer.default;
+            pdfViewer = user.pdfViewer.default;
+          };
+          # Home Manager installs Zed's wrapper when extraPackages are configured.
+          # Adding the underlying package again collides on bin/zeditor and loses
+          # the wrapper's language-server PATH. Compare packages, not app names, so
+          # custom handles and disabled Zed configurations still get installed.
+          zed = config.programs.zed-editor;
+          needsInstallation = app: !(zed.enable && zed.package != null && app.pkg == zed.package);
+          desktopId =
+            app:
+            if (app.desktop or null) != null then
+              app.desktop
+            else
+              "${app.pkg.meta.mainProgram or (lib.getName app.pkg)}.desktop";
+          associations = lib.mkMerge (
+            lib.mapAttrsToList (
+              category: app: lib.genAttrs user.defaultApps.mimeTypes.${category} (_: [ (desktopId app) ])
+            ) apps
+          );
+        in
+        lib.mkMerge [
+          { home.sessionVariables.EDITOR = lib.getExe user.editor.default.pkg; }
+          (lib.mkIf user.gui.enable {
+            # Handles are authoritative even when the corresponding module is disabled.
+            home.packages = lib.unique (
+              map (app: app.pkg) (
+                builtins.filter needsInstallation (builtins.attrValues apps ++ [ user.terminal.default ])
+              )
+            );
+            home.sessionVariables = {
+              BROWSER = lib.getExe user.browser.default.pkg;
+              TERMINAL = lib.getExe user.terminal.default.pkg;
+            };
+            xdg.mimeApps = {
+              enable = true;
+              defaultApplications = associations;
+              associations.added = associations;
+            };
+          })
+        ]
+      )
     ];
+  };
 }
