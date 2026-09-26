@@ -23,7 +23,7 @@ delib.module {
       type = osaTypes.app;
       default =
         if myconfig.osa.browser.zenBrowser.enable or false then
-          { pkg = myconfig.osa.browser.zenBrowser.pkg; }
+          myconfig.osa.browser.zenBrowser
         else if myconfig.osa.browser.firefox.enable or false then
           { pkg = myconfig.osa.browser.firefox.pkg; }
         else
@@ -33,7 +33,8 @@ delib.module {
     user.fileManager.default = lib.mkOption {
       type = osaTypes.app;
       default = {
-        pkg = pkgs.nautilus;
+        pkg = myconfig.osa.fileManager.nautilus.pkg;
+        desktop = myconfig.osa.fileManager.nautilus.desktop;
       };
       description = "Default file manager.";
     };
@@ -54,7 +55,8 @@ delib.module {
     user.imageViewer.default = lib.mkOption {
       type = osaTypes.app;
       default = {
-        pkg = myconfig.osa.apps.swayimg.pkg;
+        pkg = myconfig.osa.apps.loupe.pkg;
+        desktop = myconfig.osa.apps.loupe.desktop;
       };
       description = "Default image viewer.";
     };
@@ -70,12 +72,22 @@ delib.module {
     user.defaultApps.mimeTypes = {
       editor = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "text/plain" ];
+        default = [
+          "text/plain"
+          "text/markdown"
+          "text/x-log"
+          "application/json"
+          "application/toml"
+          "application/x-yaml"
+          "text/yaml"
+        ];
         description = "MIME types opened by the default GUI editor.";
       };
       browser = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [
+          "text/html"
+          "application/xhtml+xml"
           "x-scheme-handler/http"
           "x-scheme-handler/https"
         ];
@@ -88,17 +100,75 @@ delib.module {
       };
       musicPlayer = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "audio/*" ];
+        default = [
+          "audio/aac"
+          "audio/flac"
+          "audio/mp4"
+          "audio/mpeg"
+          "audio/ogg"
+          "audio/opus"
+          "audio/vnd.wave"
+          "audio/wav"
+          "audio/webm"
+          "audio/x-aiff"
+          "audio/x-flac"
+          "audio/x-m4a"
+          "audio/x-matroska"
+          "audio/x-mpegurl"
+          "audio/x-ms-wma"
+          "audio/x-wav"
+          "application/ogg"
+          "application/x-ogg"
+          "application/xspf+xml"
+          "audio/x-scpls"
+          "application/vnd.apple.mpegurl"
+          "application/x-mpegurl"
+        ];
         description = "MIME types opened by the default music player.";
       };
       videoPlayer = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "video/*" ];
+        default = [
+          "video/mp2t"
+          "video/mp4"
+          "video/mpeg"
+          "video/ogg"
+          "video/quicktime"
+          "video/webm"
+          "video/x-flv"
+          "video/x-matroska"
+          "video/x-ms-asf"
+          "video/x-ms-wmv"
+          "video/x-msvideo"
+          "video/3gpp"
+          "video/3gpp2"
+        ];
         description = "MIME types opened by the default video player.";
       };
       imageViewer = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "image/*" ];
+        default = [
+          "image/avif"
+          "image/bmp"
+          "image/gif"
+          "image/heic"
+          "image/heif"
+          "image/jpeg"
+          "image/jxl"
+          "image/png"
+          "image/svg+xml"
+          "image/svg+xml-compressed"
+          "image/tiff"
+          "image/vnd.microsoft.icon"
+          "image/webp"
+          "image/x-icon"
+          "image/x-portable-anymap"
+          "image/x-portable-bitmap"
+          "image/x-portable-graymap"
+          "image/x-portable-pixmap"
+          "image/x-qoi"
+          "image/x-tga"
+        ];
         description = "MIME types opened by the default image viewer.";
       };
       pdfViewer = lib.mkOption {
@@ -109,39 +179,51 @@ delib.module {
     };
   };
 
-  nixos.always =
-    { myconfig, ... }:
-    let
-      bin = pkg: pkg.meta.mainProgram or (lib.getName pkg);
-      desktopId = app: app.desktop or "${bin app.pkg}.desktop";
-      mimeAssociations = app: mimeTypes: lib.genAttrs mimeTypes (_: desktopId app);
-    in
-    {
-      environment.variables = {
-        EDITOR = bin myconfig.user.editor.default.pkg;
-        BROWSER = bin myconfig.user.browser.default.pkg;
-        TERMINAL = bin myconfig.user.terminal.default.pkg;
-      };
-
-      xdg.mime.defaultApplications = lib.mkMerge [
-        (mimeAssociations myconfig.user.editor.gui myconfig.user.defaultApps.mimeTypes.editor)
-        (mimeAssociations myconfig.user.browser.default myconfig.user.defaultApps.mimeTypes.browser)
-        (mimeAssociations myconfig.user.fileManager.default myconfig.user.defaultApps.mimeTypes.fileManager)
-        (mimeAssociations myconfig.user.musicPlayer.default myconfig.user.defaultApps.mimeTypes.musicPlayer)
-        (mimeAssociations myconfig.user.videoPlayer.default myconfig.user.defaultApps.mimeTypes.videoPlayer)
-        (mimeAssociations myconfig.user.imageViewer.default myconfig.user.defaultApps.mimeTypes.imageViewer)
-        (mimeAssociations myconfig.user.pdfViewer.default myconfig.user.defaultApps.mimeTypes.pdfViewer)
-      ];
-    };
+  nixos.always = { myconfig, ... }: {
+    environment.variables.EDITOR = lib.getExe myconfig.user.editor.default.pkg;
+  };
 
   home.always =
     { myconfig, ... }:
     let
-      bin = pkg: pkg.meta.mainProgram or (lib.getName pkg);
-    in
-    {
-      home.sessionVariables = {
-        EDITOR = bin myconfig.user.editor.default.pkg;
+      user = myconfig.user;
+      apps = {
+        editor = user.editor.gui;
+        browser = user.browser.default;
+        fileManager = user.fileManager.default;
+        musicPlayer = user.musicPlayer.default;
+        videoPlayer = user.videoPlayer.default;
+        imageViewer = user.imageViewer.default;
+        pdfViewer = user.pdfViewer.default;
       };
-    };
+      desktopId =
+        app:
+        if (app.desktop or null) != null then
+          app.desktop
+        else
+          "${app.pkg.meta.mainProgram or (lib.getName app.pkg)}.desktop";
+      associations = lib.mkMerge (
+        lib.mapAttrsToList (
+          category: app: lib.genAttrs user.defaultApps.mimeTypes.${category} (_: [ (desktopId app) ])
+        ) apps
+      );
+    in
+    lib.mkMerge [
+      { home.sessionVariables.EDITOR = lib.getExe user.editor.default.pkg; }
+      (lib.mkIf user.gui.enable {
+        # Handles are authoritative even when the corresponding module is disabled.
+        home.packages = lib.unique (
+          map (app: app.pkg) (builtins.attrValues apps ++ [ user.terminal.default ])
+        );
+        home.sessionVariables = {
+          BROWSER = lib.getExe user.browser.default.pkg;
+          TERMINAL = lib.getExe user.terminal.default.pkg;
+        };
+        xdg.mimeApps = {
+          enable = true;
+          defaultApplications = associations;
+          associations.added = associations;
+        };
+      })
+    ];
 }

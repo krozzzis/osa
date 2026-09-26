@@ -9,6 +9,7 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.browser.zenBrowser.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.browser.zenBrowser.desktop = delib.strOption "zen-beta.desktop";
     osa.browser.zenBrowser.pkg =
       delib.packageOption
         inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default;

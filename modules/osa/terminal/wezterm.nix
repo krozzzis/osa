@@ -4,6 +4,7 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.terminal.wezterm.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.terminal.wezterm.desktop = delib.strOption "org.wezfurlong.wezterm.desktop";
     osa.terminal.wezterm.pkg = delib.packageOption pkgs.wezterm;
   };
 

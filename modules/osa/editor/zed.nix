@@ -9,6 +9,7 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.editor.zed.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.editor.zed.desktop = delib.strOption "dev.zed.Zed.desktop";
     osa.editor.zed.pkg = delib.packageOption pkgs.zed-editor;
   };
 

@@ -192,3 +192,41 @@ for the full module-authoring reference (how `delib.module`,
 Within osa itself, each module's `inputs.nix` is picked up automatically by
 `lib/flake-inputs.nix`; downstream flakes need to run the same scan over
 `${osa}/modules` (see the previous section) for those inputs to reach them.
+
+### Default GUI applications
+
+With `user.gui.enable`, OSA installs the packages selected by the typed
+`user.*.default` handles (and `user.editor.gui`) and configures Home Manager's
+`xdg.mimeApps`. Selecting a handle also installs its package when its module is
+disabled. Use the handle's `desktop` field for desktop IDs that differ from the
+executable name, such as `org.gnome.Loupe.desktop` or `zen-beta.desktop`.
+
+Loupe is the default image viewer. Replace old `osa.apps.swayimg` references
+with `osa.apps.loupe` downstream. MIME lists under `user.defaultApps.mimeTypes`
+are customizable and contain concrete types, not wildcards. Enabled
+LibreOffice and qBittorrent modules also provide overridable document and
+torrent defaults. Existing user `mimeapps.list` files are subject to Home
+Manager's usual backup policy when first adopting this configuration.
+
+### Wine
+
+Wine is opt-in and uses `wineWow64Packages.stable` by default:
+
+```nix
+osa.apps.wine = {
+  enable = true;
+  # pkg = pkgs.wineWow64Packages.staging;
+  profiles.wine-ru = {
+    prefix = ".wine-ru";
+    locale = "ru_RU.UTF-8";
+  };
+};
+```
+
+Each profile installs a launcher named after the attribute, uses a prefix
+relative to `$HOME`, and optionally sets `LANG` and `LC_ALL`. NixOS generates
+the requested UTF-8 locales; standalone Home Manager needs them on the host.
+The module does not initialize or migrate prefixes. The desktop launcher uses
+the selected Wine package and its normal default prefix. Set
+`osa.apps.wine.defaultApplication = false` to retain Wine without claiming
+Windows file associations.

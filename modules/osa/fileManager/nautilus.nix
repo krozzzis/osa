@@ -8,6 +8,7 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.fileManager.nautilus.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.fileManager.nautilus.desktop = delib.strOption "org.gnome.Nautilus.desktop";
     osa.fileManager.nautilus.pkg = delib.packageOption pkgs.nautilus;
   };
 

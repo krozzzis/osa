@@ -8,6 +8,7 @@ delib.module {
 
   options = { myconfig, ... }: {
     osa.apps.papers.enable = delib.boolOption myconfig.user.gui.enable;
+    osa.apps.papers.desktop = delib.strOption "org.gnome.Papers.desktop";
     osa.apps.papers.pkg = delib.packageOption pkgs.papers;
   };
 

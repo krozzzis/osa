@@ -40,11 +40,16 @@ delib.module {
     programs.dank-material-shell.plugins = {
       dankBatteryAlerts = {
         enable = true;
-        src = pkgs.fetchgit {
-          url = "https://github.com/AvengeMedia/dms-plugins";
-          rev = "3ad0e7845b62a9aca56f7959dd086b2a85655079";
-          hash = "sha256-ygsn92Yt4e5YHutGnkTzb5rAuoiB5STYAQaORUjlqRk=";
-        } + "/DankBatteryAlerts";
+        # The registry also defines src at normal priority. Keep OSA's
+        # newer pinned revision authoritative when importing that module.
+        src = lib.mkForce (
+          pkgs.fetchgit {
+            url = "https://github.com/AvengeMedia/dms-plugins";
+            rev = "3ad0e7845b62a9aca56f7959dd086b2a85655079";
+            hash = "sha256-ygsn92Yt4e5YHutGnkTzb5rAuoiB5STYAQaORUjlqRk=";
+          }
+          + "/DankBatteryAlerts"
+        );
       };
       dankCalendar.enable = true;
       volumeMixer.enable = true;

@@ -14,6 +14,7 @@ delib.module {
       reader = {
         enable = delib.description (delib.boolOption true) "Cosmic document reader";
         pkg = delib.packageOption (pkgs.cosmic-reader);
+        desktop = delib.strOption "com.system76.CosmicReader.desktop";
       };
       calculator = delib.description (delib.boolOption true) "Cosmic calculator";
       player = delib.description (delib.boolOption true) "Cosmic media player";

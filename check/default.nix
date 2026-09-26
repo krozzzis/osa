@@ -25,6 +25,13 @@ delib.host {
     osa.de.rice.primary = "niri";
 
     # Exercise opt-in branches that are not enabled by the desktop profile.
+    osa.apps.wine = {
+      enable = true;
+      profiles.wine-check = {
+        prefix = ".wine-check";
+        locale = "ru_RU.UTF-8";
+      };
+    };
     osa.apps.cosmic.enable = true;
     osa.apps.polkitLxqtAgent.enable = true;
     osa.browser.chromium.enable = true;
@@ -54,11 +61,48 @@ delib.host {
   };
 
   home.home.stateVersion = "26.05";
-  nixos.system.stateVersion = "26.05";
 
   # Minimal stand-in for what a real host's hardware/disko/boot modules
   # provide -- just enough plumbing for toplevel eval to pass assertions.
   nixos = {
+    system.stateVersion = "26.05";
+    imports = [
+      ({ config, lib, ... }: {
+        assertions =
+          let
+            home = config.home-manager.users.nixos;
+            defaults = home.xdg.mimeApps.defaultApplications;
+            expected = {
+              "image/png" = [ "org.gnome.Loupe.desktop" ];
+              "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+              "text/html" = [ "zen-beta.desktop" ];
+              "text/plain" = [ "dev.zed.Zed.desktop" ];
+              "application/pdf" = [ "org.gnome.Papers.desktop" ];
+              "audio/mpeg" = [ "vlc.desktop" ];
+              "video/mp4" = [ "vlc.desktop" ];
+              "application/x-msi" = [ "osa-wine.desktop" ];
+              "text/csv" = [ "calc.desktop" ];
+              "x-scheme-handler/magnet" = [ "org.qbittorrent.qBittorrent.desktop" ];
+            };
+          in
+          [
+            {
+              assertion = lib.all (mime: (defaults.${mime} or [ ]) == expected.${mime}) (
+                builtins.attrNames expected
+              );
+              message = "OSA default GUI applications must use their actual desktop IDs.";
+            }
+            {
+              assertion = lib.all (mime: !lib.hasInfix "*" mime) (builtins.attrNames defaults);
+              message = "MIME defaults must use concrete types, not wildcard categories.";
+            }
+            {
+              assertion = builtins.elem "ru_RU.UTF-8/UTF-8" config.i18n.supportedLocales;
+              message = "Wine profile locales must be generated on NixOS.";
+            }
+          ];
+      })
+    ];
     nixpkgs.hostPlatform = "x86_64-linux";
 
     boot.loader.grub.enable = false;
