@@ -14,9 +14,19 @@ delib.module {
     };
   };
 
+  # Stable NixOS already provides pkexec; newer releases make it opt-in.
+  nixos.always.imports = [
+    ({ options, config, ... }: {
+      config = lib.mkIf config.myconfig.osa.system.polkit.enable (
+        lib.optionalAttrs (options.security.polkit ? enablePkexecWrapper) {
+          security.polkit.enablePkexecWrapper = true;
+        }
+      );
+    })
+  ];
+
   nixos.ifEnabled = { myconfig, ... }: {
     security.polkit.enable = true;
-    security.polkit.enablePkexecWrapper = true;
 
     security.polkit.extraConfig = ''
       polkit.addRule(function (action, subject) {

@@ -1,18 +1,24 @@
 {
   delib,
-  pkgs,
   ...
 }:
-delib.module {
-  name = "osa.apps.telegram";
+{
+  imports = [
+    ((import ../../../lib/package-module.nix) "osa.apps.telegram" (
+      { pkgs }:
+      delib.module {
+        name = "osa.apps.telegram";
 
-  options = { myconfig, ... }: {
-    osa.apps.telegram.enable = delib.boolOption myconfig.user.gui.enable;
-  };
+        options = { myconfig, ... }: {
+          osa.apps.telegram.enable = delib.boolOption myconfig.user.gui.enable;
+        };
 
-  nixos.ifEnabled = {
-    environment.systemPackages = with pkgs; [
-      telegram-desktop
-    ];
-  };
+        nixos.ifEnabled = {
+          environment.systemPackages = with pkgs; [
+            telegram-desktop
+          ];
+        };
+      }
+    ))
+  ];
 }

@@ -86,13 +86,14 @@ Add it as a flake input:
 inputs.osa.url = "github:krozzzis/osa";
 ```
 
-Then feed `${inputs.osa}/modules` into denix's module scan alongside your
-own module/host directories. A minimal flake putting this together:
+A minimal composition using OSA's pinned module inputs:
 
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.follows = "nixpkgs-stable";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -104,19 +105,31 @@ own module/host directories. A minimal flake putting this together:
     osa.url = "github:krozzzis/osa";
   };
 
-  outputs = { denix, osa, ... }@inputs: {
-    nixosConfigurations = denix.lib.configurations {
-      moduleSystem = "nixos";
-      homeManagerUser = "<your-username>";
-      paths = [
-        ./hosts
-        "${osa}/modules"
-      ];
-      specialArgs = { inherit inputs; };
+  outputs = { denix, osa, ... }@inputs:
+    let
+      moduleInputs = osa.inputs // inputs;
+      paths = [ ./hosts "${osa}/modules" ];
+      scanner = import "${osa}/lib/flake-inputs.nix" { lib = inputs.nixpkgs.lib; };
+    in {
+      nixosConfigurations = (import "${osa}/lib/configurations.nix" {
+        inputs = moduleInputs;
+      }) {
+        moduleSystem = "nixos";
+        homeManagerUser = "<your-username>";
+        inherit paths;
+        exclude = scanner.findPaths paths;
+        extensions = with denix.lib.extensions; [
+          args
+          (base.withConfig { args.enable = true; })
+        ];
+        specialArgs.inputs = moduleInputs;
+      };
     };
-  };
 }
 ```
+
+For module inputs declared in your own configuration, use the `flake-file`
+scanner workflow below, as `osa-user` does.
 
 From there, a host under `./hosts/<name>/default.nix` turns modules on
 via `myconfig.osa.<category>.<name>.enable = true;`.
@@ -154,7 +167,7 @@ user.shell.aliases = {
 };
 ```
 
-See the table in `AGENTS.md` for the full contract.
+See [`modules/osa/user/default.nix`](modules/osa/user/default.nix) for the full contract.
 
 ### Mutable Codex configuration
 
@@ -211,11 +224,14 @@ Manager's usual backup policy when first adopting this configuration.
 
 ### Wine
 
-Wine is opt-in and uses `wineWow64Packages.stable` by default:
+Wine is opt-in and uses `wineWow64Packages.stable` from the selected nixpkgs
+channel. Here `stable` names the Wine release flavor, not the nixpkgs channel:
+`nixpkgs = "unstable"` still uses that Wine flavor from nixos-unstable.
 
 ```nix
 osa.apps.wine = {
   enable = true;
+  nixpkgs = "unstable";
   # pkg = pkgs.wineWow64Packages.staging;
   profiles.wine-ru = {
     prefix = ".wine-ru";
@@ -231,3 +247,116 @@ The module does not initialize or migrate prefixes. The desktop launcher uses
 the selected Wine package and its normal default prefix. Set
 `osa.apps.wine.defaultApplication = false` to retain Wine without claiming
 Windows file associations.
+
+## Stable system, independently selected applications
+
+OSA declares `nixpkgs-stable` (currently `nixos-26.05`) and
+`nixpkgs-unstable` (`nixos-unstable`). Both are pinned by `flake.lock`.
+Set their URLs in `flake-file.nix` / `inputs.nix` to change release versions,
+then run `nix run .#write-flake` and update the corresponding lock entry.
+26.11 is not a stable release yet as of September 2026. Additional inputs named
+`nixpkgs-<channel>` automatically become available to all selectors. For example,
+`flake-file.inputs.nixpkgs-2605.url = "github:nixos/nixpkgs/nixos-26.05"`
+adds `osa.apps.rustdesk.nixpkgs = "2605"`. The `system` name is reserved.
+OSA's stable/unstable input URLs are defaults that downstream can override.
+
+In downstream denix configuration:
+
+```nix
+myconfig.always.osa = {
+  system.nixpkgs = "stable";
+  nixpkgs.default = "unstable";
+  apps.rustdesk.nixpkgs = "stable";
+  apps.wine.nixpkgs = "unstable";
+  media.audacity.nixpkgs = "unstable";
+  editor.zed.nixpkgs = "unstable";
+  editor.nixvim.nixpkgs = "unstable";
+  browser.zenBrowser.nixpkgs = "unstable";
+  media.obs.nixpkgs = "stable";
+  de.dms.nixpkgs = "unstable";
+  de.dms.quickshell.nixpkgs = "unstable";
+};
+```
+
+Application selectors accept `"stable"`, `"unstable"`, additional named inputs,
+or `"system"` (the host package set, including its overlays). The default is unstable; downstream
+policy can change `osa.nixpkgs.default`. Existing `.pkg` overrides win over the
+selected default. The DMS greeter shares the shell and Quickshell packages
+with the desktop session; Quickshell follows DMS's channel unless overridden.
+Keep their channels aligned for compatible Qt plugins. OBS plugins and
+Nixvim's internal package set follow their application. Channel package sets inherit the host's nixpkgs configuration
+(including unfree policy), but not its overlays, preserving upstream cache
+identities. A `.nixpkgs` selector changes build dependencies; applications from
+separate flakes (Zen, DMS, DriftWM, etc.) retain their own pinned source
+versions. Upgrade those inputs separately to update their source versions.
+
+To support the system selector, downstream must call
+`import "${inputs.osa}/lib/configurations.nix" { inherit inputs; }` instead of
+`inputs.denix.lib.configurations`, with the same arguments. This builder first
+reads each host's selector, then uses that channel's NixOS modules **and**
+packages. Plain denix users can still select application channels, but must
+choose their system nixpkgs input themselves. Home Manager remains on master
+for current application module options; on a stable NixOS base it emits a
+release-version warning. OSA evaluates this combination in its flake check.
+`osa-user` points the root `nixpkgs` input at `nixpkgs-stable`. Its installer
+builder follows each target's selected system channel.
+
+New application modules use `lib/package-module.nix` to receive their selected
+`pkgs` locally; do not add an unstable overlay to the whole system. See
+`modules/osa/apps/rustdesk.nix` for a minimal example. Keep service/PAM/driver
+modules compatible with the host's libraries. The oo7 integration includes a
+26.05 compatibility module and builds its PAM library against the host stdenv.
+
+Prefer release-channel packages for large applications and avoid arbitrary
+`overrideAttrs` or rebuilding upstream flake packages against a different
+nixpkgs without a reason. Stable reduces churn, but cannot guarantee a cache
+hit. `cache.nixos.org` is the main binary cache; Cachix is only needed for
+projects with their own cache. Existing OSA patches to DMS/Niri and upstream
+Quickshell builds used by Caelestia can still require compilation. DMS uses the
+Quickshell release from unstable by default; an explicit `quickshell.pkg`
+override can select the git-flake build. Inspect a prospective update
+with `nix build --dry-run` before applying it; keep the previous lock file to
+return to the previous exact package set.
+
+
+## Binary caches
+
+Nix caches are configured once for the build machine, not separately for each
+application or nixpkgs channel. `cache.nixos.org` serves ordinary stable and
+unstable packages and is retained on hosts and installer images.
+
+| Cache | Configuration owner |
+| --- | --- |
+| `https://cache.nixos.org` | NixOS defaults, all hosts/images |
+| `https://niri.cachix.org` | Imported Niri NixOS module; `niri-flake.cache.enable` |
+| `https://walker.cachix.org`, `https://walker-git.cachix.org` | Enabled `osa.apps.walker` |
+| `https://nix-community.cachix.org` | Enabled `osa.editor.nixvim` |
+| `https://winapps.cachix.org` | Enabled `osa.apps.winapps` |
+
+The project keys come from the pinned upstream Niri module, Walker README,
+Nixvim flake and WinApps README. OSA adds project caches with their public keys
+and preserves signature verification. Dependency flake `nixConfig` settings do
+not automatically configure the consuming system. No separate cache is
+advertised by the pinned DMS, Quickshell or DriftWM inputs; avoid guessing cache
+URLs or adding unrelated caches. DMS's default Quickshell comes from nixpkgs.
+
+Inspect both configured lists (and their matching public-key lists):
+
+```bash
+nix eval --json .#nixosConfigurations.nixlaptop.config.nix.settings
+nix config show | rg '^(extra-)?(substituters|trusted-public-keys)|^substitute '
+nix path-info --store https://cache.nixos.org /nix/store/<exact-package-path>
+nix build --dry-run .#nixosConfigurations.nixlaptop.config.system.build.toplevel
+```
+
+The first command describes the next configuration; the second describes the
+Nix process doing the current build. New daemon cache settings take effect on
+activation, not during evaluation. Standalone Home Manager relies on its host
+administrator's daemon cache and trust configuration. Do not disable signature
+checks or add users to `trusted-users` merely to use caches.
+
+A matching URL and key do not guarantee that a particular derivation was
+uploaded. Source patches, custom build flags, package-set changes and generated
+application configurations can prevent hits even with the right cache enabled.
+Installer images contain the target closure for offline installation; their
+live environment retains NixOS's official cache.

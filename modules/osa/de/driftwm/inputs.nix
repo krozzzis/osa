@@ -4,7 +4,7 @@
   flake-file.inputs = {
     driftwm = {
       url = "github:malbiruk/driftwm";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };
 }

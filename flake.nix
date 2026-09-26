@@ -58,30 +58,42 @@
               lib = inputs.nixpkgs.lib;
               findInputsNix = import ./lib/flake-inputs.nix { inherit lib; };
               evaluatedHost =
-                (inputs.denix.lib.configurations {
-                  moduleSystem = "nixos";
-                  homeManagerUser = "nixos";
-                  paths = [
-                    ./modules
-                    ./check
-                  ];
-                  exclude = findInputsNix.findPaths [
-                    ./modules
-                    ./check
-                  ];
-                  extensions =
-                    let
-                      dext = inputs.denix.lib.extensions;
-                    in
-                    [
-                      dext.args
-                      (dext.base.withConfig { args.enable = true; })
+                channel:
+                (
+                  (import ./lib/configurations.nix {
+                    inputs = inputs // {
+                      nixpkgs-pinned-test = inputs.nixpkgs-stable;
+                    };
+                  })
+                  {
+                    moduleSystem = "nixos";
+                    homeManagerUser = "nixos";
+                    paths = [
+                      ./modules
+                      ./check
                     ];
-                  specialArgs = { inherit inputs; };
-                }).eval-check.config.system.build.toplevel.drvPath;
+                    exclude = findInputsNix.findPaths [
+                      ./modules
+                      ./check
+                    ];
+                    extensions =
+                      let
+                        dext = inputs.denix.lib.extensions;
+                      in
+                      [
+                        dext.args
+                        (dext.base.withConfig { args.enable = true; })
+                      ];
+                    specialArgs = { inherit inputs; };
+                    extraModules = [ { myconfig.osa.system.nixpkgs = channel; } ];
+                  }
+                ).eval-check.config.system.build.toplevel.drvPath;
             in
             pkgs.runCommand "osa-modules-eval" { } (
-              assert builtins.isString evaluatedHost;
+              assert lib.all (channel: builtins.isString (evaluatedHost channel)) [
+                "stable"
+                "unstable"
+              ];
               "touch $out"
             );
         };
@@ -92,7 +104,7 @@
     caelestia-shell = {
       url = "github:caelestia-dots/shell";
       inputs = {
-        nixpkgs.follows = "nixpkgs";
+        nixpkgs.follows = "nixpkgs-unstable";
         quickshell.follows = "quickshell";
       };
     };
@@ -109,20 +121,20 @@
     };
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     dms-plugin-registry = {
       url = "github:AvengeMedia/dms-plugin-registry";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     driftwm = {
       url = "github:malbiruk/driftwm";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     elephant.url = "github:abenz1267/elephant";
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     flake-file.url = "github:vic/flake-file";
     home-manager = {
@@ -131,16 +143,18 @@
     };
     koala-clash = {
       url = "github:endotrizine/koala-clash-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     niri-pkgs = {
       url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixvim = {
       url = "github:nix-community/nixvim";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     ntfsplus = {
       url = "github:cmspam/ntfsplus-flake";
@@ -152,11 +166,11 @@
     };
     quickshell = {
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     rip = {
       url = "github:cesarferreira/rip";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     silentSDDM = {
       url = "github:uiriansan/SilentSDDM";
@@ -168,13 +182,13 @@
     };
     winapps = {
       url = "github:winapps-org/winapps";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs = {
         home-manager.follows = "home-manager";
-        nixpkgs.follows = "nixpkgs";
+        nixpkgs.follows = "nixpkgs-unstable";
       };
     };
   };

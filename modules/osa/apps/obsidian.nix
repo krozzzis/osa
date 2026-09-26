@@ -1,23 +1,30 @@
-{ delib, pkgs, ... }:
-delib.module {
-  name = "osa.apps.obsidian";
+{ delib, ... }:
+{
+  imports = [
+    ((import ../../../lib/package-module.nix) "osa.apps.obsidian" (
+      { pkgs }:
+      delib.module {
+        name = "osa.apps.obsidian";
 
-  options = { myconfig, ... }: {
-    osa.apps.obsidian.enable = delib.boolOption myconfig.user.gui.enable;
-  };
+        options = { myconfig, ... }: {
+          osa.apps.obsidian.enable = delib.boolOption myconfig.user.gui.enable;
+        };
 
-  home.ifEnabled = {
-    home.packages = [ pkgs.obsidian ];
+        home.ifEnabled = {
+          home.packages = [ pkgs.obsidian ];
 
-    home.file."Obsidian/.keep".text = "";
+          home.file."Obsidian/.keep".text = "";
 
-    xdg.desktopEntries.obsidian-vault = {
-      name = "Obsidian (personal vault)";
-      comment = "Open the Obsidian vault in ~/Obsidian";
-      exec = "obsidian --vault=Obsidian";
-      icon = "obsidian";
-      terminal = false;
-      categories = [ "Office" ];
-    };
-  };
+          xdg.desktopEntries.obsidian-vault = {
+            name = "Obsidian (personal vault)";
+            comment = "Open the Obsidian vault in ~/Obsidian";
+            exec = "obsidian --vault=Obsidian";
+            icon = "obsidian";
+            terminal = false;
+            categories = [ "Office" ];
+          };
+        };
+      }
+    ))
+  ];
 }

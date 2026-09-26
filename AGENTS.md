@@ -12,6 +12,10 @@ hosts belong in a composable downstream flake such as `~/osa-user`.
 - `modules/osa/user/` declares the public `user.*` interface.
 - `check/` contains evaluation-only hosts that are invisible downstream.
 - `lib/flake-inputs.nix` discovers module-local `inputs.nix` files.
+- `lib/configurations.nix` selects each host's NixOS module and package source.
+- `lib/nixpkgs-sources.nix` discovers `nixpkgs-<channel>` inputs.
+- `lib/package-module.nix` supplies application-local packages and channel options.
+- `lib/compat/` contains narrowly scoped stable-release compatibility modules.
 - `packages/osa/` and `scripts/osa/` implement the `osa` command.
 
 ## Flake inputs
@@ -23,10 +27,15 @@ _:
 {
   flake-file.inputs.example = {
     url = "github:owner/project";
-    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 }
 ```
+
+Application inputs normally follow `nixpkgs-unstable`; system/hardware inputs
+follow `nixpkgs`. Declare release URL defaults with `lib.mkDefault` so downstream
+can override them. Do not change a package's source version implicitly when
+changing its build dependencies.
 
 After changing `flake-file.nix` or any `inputs.nix`, run `nix run .#write-flake`.
 The `flake-file-in-sync` check rejects a stale generated `flake.nix`.
@@ -45,17 +54,24 @@ command; remote servers require a non-empty URL.
 
 ## Module shape
 
+Application modules wrap `delib.module` to declare `.nixpkgs` and receive the
+selected package set (example path: `modules/osa/apps/example.nix`):
+
 ```nix
-{ delib, pkgs, ... }:
-delib.module {
-  name = "osa.category.name";
-  options = { myconfig, ... }: {
-    osa.category.name.enable = delib.boolOption myconfig.user.gui.enable;
-    osa.category.name.pkg = delib.packageOption pkgs.package;
-  };
-  nixos.ifEnabled = { cfg, ... }: { };
-  home.ifEnabled = { cfg, ... }: { };
-  myconfig.ifEnabled = { ... }: { };
+{ delib, ... }:
+{
+  imports = [
+    ((import ../../../lib/package-module.nix) "osa.apps.example" ({ pkgs }:
+      delib.module {
+        name = "osa.apps.example";
+        options = { myconfig, ... }: {
+          osa.apps.example.enable = delib.boolOption myconfig.user.gui.enable;
+          osa.apps.example.pkg = delib.packageOption pkgs.example;
+        };
+        home.ifEnabled = { cfg, ... }: { home.packages = [ cfg.pkg ]; };
+      }
+    ))
+  ];
 }
 ```
 
@@ -67,6 +83,35 @@ delib.module {
 - Install `cfg.pkg`, never its default, so downstream overrides work.
 - Development servers are opt-in and register in `user.dev.lsp` or
   `user.dev.mcp`.
+
+## Package channels and binary caches
+
+- `osa.system.nixpkgs` selects the system source through `lib/configurations.nix`.
+  Both NixOS modules and packages must come from that source.
+- `osa.nixpkgs.default` defaults applications to `"unstable"`. Each application
+  can select `"stable"`, `"unstable"`, `"system"`, or another `nixpkgs-<name>` input.
+  The `system` name is reserved. Stable currently means NixOS 26.05.
+- Personal channel choices belong in `osa-user/modules/user/packageChannels.nix`.
+  Do not embed the user's stable/unstable application policy in OSA defaults.
+- Reuse the selected package set for application plugins and helper programs.
+  Explicit `.pkg` overrides must reach the package actually installed/run.
+- Keep DMS and Quickshell Qt dependencies aligned; its greeter shares their
+  selected packages. PAM and driver libraries must match the host ABI.
+- Import only explicit `config.nixpkgs.config` settings into alternate package
+  sets. Do not copy normalized `pkgs.config` defaults across releases, and do
+  not apply host overlays to all channels.
+- Nix's official cache serves stable and unstable on every host. Project caches
+  are configured by their consuming modules, with keys taken from upstream:
+  Niri, Walker, Nixvim (`nix-community`), and WinApps. A dependency's `nixConfig`
+  is not automatically inherited. Never disable signature checking.
+- Audit merged `substituters` + `extra-substituters` and both public-key lists
+  in the evaluated host and installer configurations. Inspect active Nix
+  configuration separately: new settings apply only after activation.
+- A configured cache is not proof of a cache hit. Verify exact store paths
+  with `nix path-info --store URL PATH`. Patched DMS/Niri, configured wrappers,
+  custom variants and the stable oo7 PAM backport may still need local builds.
+- Standalone Home Manager uses the host Nix daemon's cache/trust configuration;
+  its administrator must configure project caches independently.
 
 ## Mutable configuration and ownership
 
@@ -86,6 +131,11 @@ nix flake check
 nix run nixpkgs#deadnix -- --fail modules lib check flake-file.nix
 git diff --check
 ```
+
+The flake check evaluates both stable and unstable, custom channel names,
+package overrides, cache configuration and the oo7 PAM compatibility path.
+Home Manager currently remains on master; stable evaluation emits a release
+version warning. Evaluation does not replace build or runtime testing.
 
 Evaluate a real composed machine with local OSA changes:
 

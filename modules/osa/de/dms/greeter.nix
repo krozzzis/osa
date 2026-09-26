@@ -12,6 +12,8 @@ delib.module {
     services = {
       displayManager.dms-greeter = {
         enable = true;
+        package = myconfig.osa.de.dms.pkg;
+        quickshell.package = myconfig.osa.de.dms.quickshell.pkg;
         compositor.name = "niri";
         configHome = "/home/${myconfig.user.constants.username}";
       };

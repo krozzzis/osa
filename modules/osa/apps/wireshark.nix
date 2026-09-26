@@ -1,23 +1,29 @@
 {
   delib,
-  pkgs,
   ...
 }:
-delib.module {
-  name = "osa.apps.wireshark";
+{
+  imports = [
+    ((import ../../../lib/package-module.nix) "osa.apps.wireshark" (
+      { pkgs }:
+      delib.module {
+        name = "osa.apps.wireshark";
 
-  options = { myconfig, ... }: {
-    osa.apps.wireshark.enable = delib.boolOption myconfig.user.gui.enable;
-  };
+        options = { myconfig, ... }: {
+          osa.apps.wireshark.enable = delib.boolOption myconfig.user.gui.enable;
+        };
 
-  home.ifEnabled = {
-    home.packages = with pkgs; [
-      wireshark
-    ];
-  };
+        home.ifEnabled = {
+          home.packages = with pkgs; [
+            wireshark
+          ];
+        };
 
-  nixos.ifEnabled = { myconfig, ... }: {
-    programs.wireshark.enable = true;
-    users.users.${myconfig.user.constants.username}.extraGroups = [ "wireshark" ];
-  };
+        nixos.ifEnabled = { myconfig, ... }: {
+          programs.wireshark.enable = true;
+          users.users.${myconfig.user.constants.username}.extraGroups = [ "wireshark" ];
+        };
+      }
+    ))
+  ];
 }

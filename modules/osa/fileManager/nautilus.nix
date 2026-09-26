@@ -1,41 +1,47 @@
 {
   delib,
-  pkgs,
   ...
 }:
-delib.module {
-  name = "osa.fileManager.nautilus";
+{
+  imports = [
+    ((import ../../../lib/package-module.nix) "osa.fileManager.nautilus" (
+      { pkgs }:
+      delib.module {
+        name = "osa.fileManager.nautilus";
 
-  options = { myconfig, ... }: {
-    osa.fileManager.nautilus.enable = delib.boolOption myconfig.user.gui.enable;
-    osa.fileManager.nautilus.desktop = delib.strOption "org.gnome.Nautilus.desktop";
-    osa.fileManager.nautilus.pkg = delib.packageOption pkgs.nautilus;
-  };
+        options = { myconfig, ... }: {
+          osa.fileManager.nautilus.enable = delib.boolOption myconfig.user.gui.enable;
+          osa.fileManager.nautilus.desktop = delib.strOption "org.gnome.Nautilus.desktop";
+          osa.fileManager.nautilus.pkg = delib.packageOption pkgs.nautilus;
+        };
 
-  nixos.ifEnabled = { myconfig, ... }: {
-    services.gvfs.enable = true;
-    services.udisks2.enable = true;
+        nixos.ifEnabled = { myconfig, ... }: {
+          services.gvfs.enable = true;
+          services.udisks2.enable = true;
 
-    environment.systemPackages = [
-      myconfig.osa.fileManager.nautilus.pkg
-      pkgs.usbutils
-      pkgs.apfs-fuse
-    ];
+          environment.systemPackages = [
+            myconfig.osa.fileManager.nautilus.pkg
+            pkgs.usbutils
+            pkgs.apfs-fuse
+          ];
 
-    boot.supportedFilesystems = [ "ntfs" ];
-  };
+          boot.supportedFilesystems = [ "ntfs" ];
+        };
 
-  home.ifEnabled = { myconfig, ... }: {
-    xdg.userDirs = {
-      enable = true;
-      createDirectories = true;
-    };
+        home.ifEnabled = { myconfig, ... }: {
+          xdg.userDirs = {
+            enable = true;
+            createDirectories = true;
+          };
 
-    # GTK file managers, including Nautilus, read this shared bookmarks file.
-    xdg.configFile."gtk-3.0/bookmarks".text = ''
-      file:///home/${myconfig.user.constants.username}/Downloads Downloads
-      file:///home/${myconfig.user.constants.username}/Documents Documents
-    '';
-  };
+          # GTK file managers, including Nautilus, read this shared bookmarks file.
+          xdg.configFile."gtk-3.0/bookmarks".text = ''
+            file:///home/${myconfig.user.constants.username}/Downloads Downloads
+            file:///home/${myconfig.user.constants.username}/Documents Documents
+          '';
+        };
 
+      }
+    ))
+  ];
 }

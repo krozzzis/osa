@@ -1,5 +1,6 @@
 {
   delib,
+  inputs,
   ...
 }:
 delib.module {
@@ -21,7 +22,15 @@ delib.module {
       interval = "monthly";
     };
 
-    services.journald.settings.Journal.Storage = "volatile";
+    services.journald =
+      if inputs.nixpkgs.lib.versionAtLeast inputs.nixpkgs.lib.version "26.11" then
+        {
+          settings.Journal.Storage = "volatile";
+        }
+      else
+        {
+          extraConfig = "Storage=volatile";
+        };
 
     systemd.settings.Manager.DefaultTimeoutStopSec = "10s";
 

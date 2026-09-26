@@ -56,7 +56,9 @@ in
               let
                 lib = inputs.nixpkgs.lib;
                 findInputsNix = import ./lib/flake-inputs.nix { inherit lib; };
-                evaluatedHost = (inputs.denix.lib.configurations {
+                evaluatedHost = channel: ((import ./lib/configurations.nix {
+                  inputs = inputs // { nixpkgs-pinned-test = inputs.nixpkgs-stable; };
+                }) {
                   moduleSystem = "nixos";
                   homeManagerUser = "nixos";
                   paths = [ ./modules ./check ];
@@ -70,10 +72,11 @@ in
                       (dext.base.withConfig { args.enable = true; })
                     ];
                   specialArgs = { inherit inputs; };
+                  extraModules = [ { myconfig.osa.system.nixpkgs = channel; } ];
                 }).eval-check.config.system.build.toplevel.drvPath;
               in
               pkgs.runCommand "osa-modules-eval" { } (
-                assert builtins.isString evaluatedHost;
+                assert lib.all (channel: builtins.isString (evaluatedHost channel)) [ "stable" "unstable" ];
                 "touch $out"
               );
           };

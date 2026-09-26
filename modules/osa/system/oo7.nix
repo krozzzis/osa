@@ -1,10 +1,19 @@
-{ delib, lib, ... }:
+{
+  delib,
+  lib,
+  inputs,
+  ...
+}:
 delib.module {
   name = "osa.system.oo7";
 
   options = { myconfig, ... }: {
     osa.system.oo7.enable = delib.boolOption myconfig.user.gui.enable;
   };
+
+  nixos.always.imports =
+    lib.optionals (inputs.nixpkgs.lib.versionOlder inputs.nixpkgs.lib.version "26.11")
+      [ ../../../lib/compat/oo7.nix ];
 
   nixos.ifEnabled = {
     # oo7 owns both Secret Service APIs: the traditional D-Bus API used by

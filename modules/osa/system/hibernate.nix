@@ -1,5 +1,6 @@
 {
   delib,
+  inputs,
   lib,
   pkgs,
   ...
@@ -46,7 +47,15 @@ delib.module {
     powerManagement.enable = true;
     services.power-profiles-daemon.enable = true;
 
-    services.journald.settings.Journal.SyncIntervalSec = "5s";
+    services.journald =
+      if inputs.nixpkgs.lib.versionAtLeast inputs.nixpkgs.lib.version "26.11" then
+        {
+          settings.Journal.SyncIntervalSec = "5s";
+        }
+      else
+        {
+          extraConfig = "SyncIntervalSec=5s";
+        };
 
     # s2idle on this hardware needs PSR disabled or resume freezes
     boot.kernelParams = lib.optionals (cfg.resumeOffset != null) [

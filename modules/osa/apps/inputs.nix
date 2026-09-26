@@ -6,7 +6,7 @@
 
     koala-clash = {
       url = "github:endotrizine/koala-clash-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     walker = {
@@ -16,7 +16,7 @@
 
     winapps = {
       url = "github:winapps-org/winapps";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };
 }

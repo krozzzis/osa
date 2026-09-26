@@ -18,6 +18,13 @@ delib.host {
     user.editor.default = myconfig.osa.editor.nixvim;
     user.editor.gui = myconfig.osa.editor.zed;
 
+    osa.apps.rustdesk.enable = true;
+    # The test builder supplies this additional named channel.
+    osa.apps.rustdesk.nixpkgs = "pinned-test";
+    osa.media.obs.nixpkgs = "stable";
+    osa.editor.vim.nixpkgs = "unstable";
+    osa.editor.vim.pkg = myconfig.osa.nixpkgs.packages.system.vim;
+
     osa.de.rice.niri.enable = true;
     osa.de.rice.caelestia.enable = true;
     osa.de.rice.xfce.enable = true;
@@ -71,6 +78,12 @@ delib.host {
         assertions =
           let
             home = config.home-manager.users.nixos;
+            osa = config.myconfig.osa;
+            settings = config.nix.settings;
+            caches = map (lib.removeSuffix "/") (
+              (settings.substituters or [ ]) ++ (settings.extra-substituters or [ ])
+            );
+            keys = (settings.trusted-public-keys or [ ]) ++ (settings.extra-trusted-public-keys or [ ]);
             defaults = home.xdg.mimeApps.defaultApplications;
             expected = {
               "image/png" = [ "org.gnome.Loupe.desktop" ];
@@ -86,6 +99,43 @@ delib.host {
             };
           in
           [
+            {
+              assertion =
+                (settings.substitute or true)
+                && (settings.require-sigs or true)
+                &&
+                  lib.all
+                    (
+                      cache:
+                      builtins.elem "https://${cache}" caches && lib.any (key: lib.hasPrefix "${cache}-1:" key) keys
+                    )
+                    [
+                      "cache.nixos.org"
+                      "niri.cachix.org"
+                      "nix-community.cachix.org"
+                      "winapps.cachix.org"
+                    ];
+              message = "Binary caches must retain substitution, signature checks, URLs, and matching public keys.";
+            }
+            {
+              assertion =
+                config.security.pam.services.login.rules.auth.oo7.order
+                < config.security.pam.services.login.rules.auth.unix.order
+                && config.security.pam.services.login.rules.session.oo7.settings.auto_start;
+              message = "oo7 must capture the password before sufficient pam_unix succeeds and start during the session.";
+            }
+            {
+              assertion =
+                osa.apps.rustdesk.pkg.drvPath == osa.nixpkgs.packages.stable.rustdesk-flutter.drvPath
+                && osa.editor.zed.pkg.drvPath == osa.nixpkgs.packages.unstable.zed-editor.drvPath
+                && osa.editor.nixvim.pkg.drvPath == osa.nixpkgs.packages.unstable.neovim.drvPath
+                && osa.media.obs.pkg.drvPath == osa.nixpkgs.packages.stable.obs-studio.drvPath
+                && osa.editor.vim.pkg.drvPath == osa.nixpkgs.packages.system.vim.drvPath
+                && home.programs.firefox.package.drvPath == osa.browser.firefox.pkg.drvPath
+                && home.programs.librewolf.package.drvPath == osa.browser.librewolf.pkg.drvPath
+                && home.programs.wezterm.package.drvPath == osa.terminal.wezterm.pkg.drvPath;
+              message = "Application channels and explicit pkg overrides must select the requested derivations.";
+            }
             {
               assertion = lib.all (mime: (defaults.${mime} or [ ]) == expected.${mime}) (
                 builtins.attrNames expected
