@@ -134,8 +134,11 @@ git diff --check
 
 The flake check evaluates both stable and unstable, custom channel names,
 package overrides, cache configuration and the oo7 PAM compatibility path.
-Home Manager currently remains on master; stable evaluation emits a release
-version warning. Evaluation does not replace build or runtime testing.
+The composition builder matches Home Manager to the system nixpkgs release,
+using `home-manager` and `home-manager-<channel>` inputs. Keep stable Home Manager
+and nixpkgs inputs on matching releases; do not disable the release check.
+Application package channels remain independent. Evaluation does not replace
+build or runtime testing.
 
 Evaluate a real composed machine with local OSA changes:
 

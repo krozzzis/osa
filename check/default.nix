@@ -100,6 +100,20 @@ delib.host {
           in
           [
             {
+              assertion = home.home.version.release == config.system.nixos.release;
+              message = "Home Manager must match the selected NixOS release.";
+            }
+            {
+              assertion = lib.all (
+                file:
+                !(builtins.elem file.target [
+                  ".codex/config.toml"
+                  ".config/codex/config.toml"
+                ])
+              ) (builtins.attrValues home.home.file);
+              message = "Codex runtime configuration must stay mutable on both Home Manager releases.";
+            }
+            {
               assertion =
                 (settings.substitute or true)
                 && (settings.require-sigs or true)

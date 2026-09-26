@@ -295,9 +295,13 @@ To support the system selector, downstream must call
 `inputs.denix.lib.configurations`, with the same arguments. This builder first
 reads each host's selector, then uses that channel's NixOS modules **and**
 packages. Plain denix users can still select application channels, but must
-choose their system nixpkgs input themselves. Home Manager remains on master
-for current application module options; on a stable NixOS base it emits a
-release-version warning. OSA evaluates this combination in its flake check.
+choose their system nixpkgs input themselves. The builder also selects Home
+Manager with the same release as the system nixpkgs: `home-manager-stable`
+(`release-26.05`) for stable and `home-manager` (master) for unstable. Application
+packages retain their independent channel selectors. For additional system
+releases, add a matching `home-manager-<channel>` input; the builder checks its
+`release.json` against nixpkgs `.version` and reports a missing match explicitly.
+OSA evaluates both release combinations in its flake check.
 `osa-user` points the root `nixpkgs` input at `nixpkgs-stable`. Its installer
 builder follows each target's selected system channel.
 

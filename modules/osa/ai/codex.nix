@@ -69,7 +69,9 @@
             programs.codex = {
               enable = true;
               package = cfg.pkg;
-              settings = lib.mkForce null;
+              # Empty settings generate no file on both stable and master HM.
+              # Stable HM's MCP merge cannot handle null despite its option type.
+              settings = lib.mkForce { };
             };
             home.sessionVariables.CODEX_HOME = lib.mkForce "$HOME/.codex";
 

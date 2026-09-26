@@ -141,6 +141,10 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    home-manager-stable = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
     koala-clash = {
       url = "github:endotrizine/koala-clash-nix";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
