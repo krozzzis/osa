@@ -36,6 +36,7 @@ rustPlatform.buildRustPackage {
     libadwaita
     poppler
     fontconfig
+    shared-mime-info
   ];
 
   postPatch = ''
@@ -55,8 +56,12 @@ rustPlatform.buildRustPackage {
   nativeCheckInputs = [ xvfb-run ];
   checkPhase = ''
     runHook preCheck
+    export XDG_DATA_DIRS=${shared-mime-info}/share:''${XDG_DATA_DIRS:-}
+    # Tests mutate process-wide HOME/XDG variables, so run them serially.
+    # A Nix sandbox has no user-visible GIO mounts. Keep all other tests.
     xvfb-run -a cargo test --offline --release \
-      --target ${stdenv.hostPlatform.rust.rustcTarget} -j "$NIX_BUILD_CORES"
+      --target ${stdenv.hostPlatform.rust.rustcTarget} -j "$NIX_BUILD_CORES" \
+      -- --test-threads=1 --skip utils::config_test::test_get_system_mounts_structure
     runHook postCheck
   '';
   postInstall = ''
