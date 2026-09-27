@@ -301,7 +301,10 @@ Manager with the same release as the system nixpkgs: `home-manager-stable`
 packages retain their independent channel selectors. For additional system
 releases, add a matching `home-manager-<channel>` input; the builder checks its
 `release.json` against nixpkgs `.version` and reports a missing match explicitly.
-OSA evaluates both release combinations in its flake check.
+OSA evaluates both release combinations in its flake check. Stable Home Manager
+also supports newer Fish: OSA extracts its embedded completion generator when
+the old on-disk script is absent. The check builds bat completions with Fish
+from both channels.
 `osa-user` points the root `nixpkgs` input at `nixpkgs-stable`. Its installer
 builder follows each target's selected system channel.
 

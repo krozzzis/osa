@@ -1,6 +1,7 @@
 {
   delib,
   lib,
+  inputs,
   ...
 }:
 {
@@ -18,6 +19,10 @@
           );
           osa.shell.fish.pkg = delib.packageOption pkgs.fish;
         };
+
+        home.always.imports = [
+          (import ../../../lib/compat/fish.nix { homeManager = inputs.home-manager; })
+        ];
 
         home.ifEnabled = { cfg, myconfig, ... }: {
           programs.fish = {

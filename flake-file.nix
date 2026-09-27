@@ -40,6 +40,7 @@ in
         checks = (base.checks or { }) // {
           ''${system} = (base.checks.''${system} or { }) // {
             flake-file-in-sync = evaluated.config.flake-file.check-flake-file pkgs;
+            fish-completions = import ./lib/checks/fish-completions.nix { inherit inputs system; };
 
             osa-cli = pkgs.runCommand "osa-cli-tests" { nativeBuildInputs = [ pkgs.bash ]; }
               (builtins.concatStringsSep "\n" [
