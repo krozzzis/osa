@@ -2,8 +2,12 @@
   delib,
   lib,
   inputs,
+  pkgs,
   ...
 }:
+let
+  systemPkgs = pkgs;
+in
 {
   imports = [
     ((import ../../../../lib/package-module.nix) "osa.de.niri" (
@@ -73,7 +77,9 @@
 
           xdg.portal = {
             enable = true;
-            extraPortals = with pkgs; [
+            # The upstream Niri module also installs the system GNOME portal.
+            # Use that same set to avoid two versions providing one user unit.
+            extraPortals = with systemPkgs; [
               xdg-desktop-portal-gtk
               xdg-desktop-portal-gnome # Provides ScreenCast for OBS and screen sharing.
             ];

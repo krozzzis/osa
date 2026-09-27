@@ -104,6 +104,20 @@ delib.host {
               message = "Home Manager must match the selected NixOS release.";
             }
             {
+              assertion =
+                config.security.wrappers.ThroneCore.source == "${osa.apps.throne.pkg}/share/throne/ThroneCore"
+                && !(config.security.wrappers.throne-core.enable or false);
+              message = "Unstable Throne must use its matching TUN core wrapper on both system channels.";
+            }
+            {
+              assertion =
+                let
+                  portals = map lib.getName (lib.unique config.xdg.portal.extraPortals);
+                in
+                builtins.length portals == builtins.length (lib.unique portals);
+              message = "Portal backends must not install multiple versions of the same user service.";
+            }
+            {
               assertion = lib.all (
                 file:
                 !(builtins.elem file.target [

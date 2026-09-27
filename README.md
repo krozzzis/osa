@@ -302,9 +302,13 @@ packages retain their independent channel selectors. For additional system
 releases, add a matching `home-manager-<channel>` input; the builder checks its
 `release.json` against nixpkgs `.version` and reports a missing match explicitly.
 OSA evaluates both release combinations in its flake check. Stable Home Manager
-also supports newer Fish: OSA extracts its embedded completion generator when
-the old on-disk script is absent. The check builds bat completions with Fish
-from both channels.
+and NixOS also support newer Fish: OSA extracts its embedded completion
+generator when the old on-disk script is absent, preserving NixOS's collision
+patch. The check builds both system and Home Manager completions with Fish
+from both channels. Throne's TUN wrapper also follows the application's core
+layout; custom `.pkg` overrides can set `.coreName` to `Core` or `ThroneCore`.
+Niri's system portal backends use the system package set to avoid duplicate
+service units when the compositor uses another channel.
 `osa-user` points the root `nixpkgs` input at `nixpkgs-stable`. Its installer
 builder follows each target's selected system channel.
 

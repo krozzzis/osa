@@ -138,9 +138,13 @@ The composition builder matches Home Manager to the system nixpkgs release,
 using `home-manager` and `home-manager-<channel>` inputs. Keep stable Home Manager
 and nixpkgs inputs on matching releases; do not disable the release check.
 Application package channels remain independent. `lib/compat/fish.nix` adapts
-stable Home Manager to Fish with embedded completion tools without changing the
-Fish package. The `fish-completions` check builds bat completions with stable and
-unstable Fish. Evaluation does not replace build or runtime testing.
+stable NixOS and Home Manager to Fish with embedded completion tools without
+changing the Fish package. NixOS retains its completion collision patch. The
+`fish-completions` check builds both independent pipelines with stable and
+unstable Fish, including system accountsservice and bat completions. Throne's
+TUN wrapper name/path must follow its application package, not the system
+release; preserve its existing capabilities and setuid policy. System portal
+backends use the system package set so Niri cannot register duplicate user units. Evaluation does not replace build or runtime testing.
 
 Evaluate a real composed machine with local OSA changes:
 

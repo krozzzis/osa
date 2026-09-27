@@ -24,6 +24,10 @@
           (import ../../../lib/compat/fish.nix { homeManager = inputs.home-manager; })
         ];
 
+        nixos.always.imports = [
+          (import ../../../lib/compat/fish.nix { nixpkgs = inputs.nixpkgs; })
+        ];
+
         home.ifEnabled = { cfg, myconfig, ... }: {
           programs.fish = {
             package = cfg.pkg;
