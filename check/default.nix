@@ -105,6 +105,10 @@ delib.host {
           in
           [
             {
+              assertion = home.dconf.settings."io/missioncenter/MissionCenter".first-time-running == false;
+              message = "Mission Center must not run its non-NixOS setup wizard at startup.";
+            }
+            {
               assertion = lib.elem config.myconfig.user.taskManager.default.pkg home.home.packages;
               message = "The default task manager handle must be installed.";
             }
