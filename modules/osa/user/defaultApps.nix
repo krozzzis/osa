@@ -222,7 +222,13 @@ delib.module {
             # Handles are authoritative even when the corresponding module is disabled.
             home.packages = lib.unique (
               map (app: app.pkg) (
-                builtins.filter needsInstallation (builtins.attrValues apps ++ [ user.terminal.default ])
+                builtins.filter needsInstallation (
+                  builtins.attrValues apps
+                  ++ [
+                    user.terminal.default
+                    user.taskManager.default
+                  ]
+                )
               )
             );
             home.sessionVariables = {

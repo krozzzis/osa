@@ -39,6 +39,8 @@ delib.host {
         locale = "ru_RU.UTF-8";
       };
     };
+    osa.taskManager.missionCenter.enable = true;
+    osa.apps.foliate.enable = true;
     osa.fileManager.dolphin.enable = true;
     osa.fileManager.flux.enable = true;
     osa.apps.cosmic.enable = true;
@@ -93,6 +95,7 @@ delib.host {
               "text/html" = [ "zen-beta.desktop" ];
               "text/plain" = [ "dev.zed.Zed.desktop" ];
               "application/pdf" = [ "org.gnome.Papers.desktop" ];
+              "application/epub+zip" = [ "com.github.johnfactotum.Foliate.desktop" ];
               "audio/mpeg" = [ "vlc.desktop" ];
               "video/mp4" = [ "vlc.desktop" ];
               "application/x-msi" = [ "osa-wine.desktop" ];
@@ -101,6 +104,10 @@ delib.host {
             };
           in
           [
+            {
+              assertion = lib.elem config.myconfig.user.taskManager.default.pkg home.home.packages;
+              message = "The default task manager handle must be installed.";
+            }
             {
               assertion = home.home.version.release == config.system.nixos.release;
               message = "Home Manager must match the selected NixOS release.";

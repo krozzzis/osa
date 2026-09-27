@@ -84,6 +84,15 @@ delib.module {
   name = "user";
 
   options = { myconfig, ... }: {
+    user.taskManager.default = lib.mkOption {
+      type = osaTypes.app;
+      default = {
+        pkg = myconfig.osa.taskManager.missionCenter.pkg;
+        desktop = myconfig.osa.taskManager.missionCenter.desktop;
+      };
+      description = "Default task manager application.";
+    };
+
     user.gui.enable = delib.description (delib.boolOption false) "GUI mode: enables desktop-oriented osa modules by default";
 
     user.gui.fonts.nerdfonts = delib.description (delib.boolOption false) "Nerd Fonts for icons in terminal and GUI prompts";
