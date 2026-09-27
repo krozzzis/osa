@@ -307,6 +307,8 @@ generator when the old on-disk script is absent, preserving NixOS's collision
 patch. The check builds both system and Home Manager completions with Fish
 from both channels. Throne's TUN wrapper also follows the application's core
 layout; custom `.pkg` overrides can set `.coreName` to `Core` or `ThroneCore`.
+On stable NixOS, OSA also backports DNS revert authorization for TUN cores
+with the existing network capabilities, avoiding an extra polkit prompt.
 Niri's system portal backends use the system package set to avoid duplicate
 service units when the compositor uses another channel.
 `osa-user` points the root `nixpkgs` input at `nixpkgs-stable`. Its installer

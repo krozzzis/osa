@@ -110,6 +110,10 @@ delib.host {
               message = "Unstable Throne must use its matching TUN core wrapper on both system channels.";
             }
             {
+              assertion = lib.hasInfix "\"org.freedesktop.resolve1.revert\"" config.security.polkit.extraConfig;
+              message = "Throne's capability-based DNS policy must include reverting link settings.";
+            }
+            {
               assertion =
                 let
                   portals = map lib.getName (lib.unique config.xdg.portal.extraPortals);

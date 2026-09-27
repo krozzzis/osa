@@ -23,6 +23,10 @@
             "Core";
         wrapperNameFor = core: if core == "Core" then "throne-core" else core;
         hostWrapper = wrapperNameFor (coreNameFor inputs.nixpkgs);
+        needsResolvedRevert =
+          !lib.hasInfix "\"org.freedesktop.resolve1.revert\"" (
+            builtins.readFile "${inputs.nixpkgs}/nixos/modules/programs/throne.nix"
+          );
       in
       delib.module {
         name = "osa.apps.throne";
@@ -65,6 +69,33 @@
               };
             }
           );
+          # Newer Throne resets per-link DNS as well as configuring it. Stable
+          # NixOS's rule omits revert; retain upstream's capability-based check.
+          security.polkit.extraConfig =
+            lib.mkIf
+              (
+                needsResolvedRevert
+                && cfg.tunMode
+                && !config.programs.throne.tunMode.setuid
+                && config.services.resolved.enable
+              )
+              ''
+                polkit.addRule(function(action, subject) {
+                  if (action.id !== "org.freedesktop.resolve1.revert") {
+                    return polkit.Result.NOT_HANDLED;
+                  }
+                  try {
+                    var parentPid = polkit.spawn(["${lib.getExe' pkgs.procps "ps"}", "-o", "ppid=", subject.pid]).trim();
+                    var parentCap = polkit.spawn(["${lib.getExe' pkgs.libcap "getpcaps"}", parentPid]).trim();
+                    if (parentCap.includes("cap_net_admin") && parentCap.includes("cap_net_raw")) {
+                      return polkit.Result.YES;
+                    }
+                  } catch (e) {
+                    return polkit.Result.NOT_HANDLED;
+                  }
+                  return polkit.Result.NOT_HANDLED;
+                });
+              '';
         };
       }
     ))
