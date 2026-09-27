@@ -13,6 +13,7 @@ delib.module {
       hyprlandLayoutRadiusOverride = myconfig.osa.ui.cornerRadius;
       currentThemeName = "dynamic";
       currentThemeCategory = "dynamic";
+      matugenTemplateKcolorscheme = true;
       matugenTemplateHyprland = false;
       matugenTemplateMangowc = false;
       popupTransparency = myconfig.osa.ui.transparency;

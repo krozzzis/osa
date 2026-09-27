@@ -39,6 +39,8 @@ delib.host {
         locale = "ru_RU.UTF-8";
       };
     };
+    osa.fileManager.dolphin.enable = true;
+    osa.fileManager.flux.enable = true;
     osa.apps.cosmic.enable = true;
     osa.apps.polkitLxqtAgent.enable = true;
     osa.browser.chromium.enable = true;
