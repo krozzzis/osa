@@ -46,6 +46,7 @@ delib.host {
     osa.apps.cosmic.enable = true;
     osa.apps.polkitLxqtAgent.enable = true;
     osa.browser.chromium.enable = true;
+    osa.browser.videoFullscreenZoom.enable = true;
     osa.dev.lsp.basedpyright.enable = true;
     osa.dev.lsp.jsonnet-ls.enable = true;
     osa.dev.lsp.lua-ls.enable = true;
