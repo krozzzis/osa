@@ -1,4 +1,4 @@
-{ delib, lib, ... }:
+{ delib, ... }:
 delib.module {
   name = "osa.de.dms";
 
@@ -14,9 +14,11 @@ delib.module {
       currentThemeName = "dynamic";
       currentThemeCategory = "dynamic";
       matugenTemplateKcolorscheme = true;
+      matugenTemplateWezterm = true;
       matugenTemplateHyprland = false;
       matugenTemplateMangowc = false;
-      popupTransparency = lib.mkDefault myconfig.osa.ui.transparency;
+      popupTransparency = myconfig.osa.ui.transparency;
+      frameOpacity = myconfig.osa.ui.transparency;
       dockTransparency = myconfig.osa.ui.transparency;
       desktopClockTransparency = myconfig.osa.ui.transparency;
       systemMonitorTransparency = myconfig.osa.ui.transparency;

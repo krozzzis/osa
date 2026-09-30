@@ -41,12 +41,7 @@
               window_background_opacity = myconfig.osa.ui.transparency;
               text_background_opacity = 1.0;
               wayland_window_background_blur = true;
-              colors = {
-                background = "#0a0a0a";
-                foreground = "#e0e0e0";
-                cursor_bg = "#e0e0e0";
-                cursor_fg = "#0a0a0a";
-              };
+              color_scheme = "dank-theme";
             };
           };
         };
