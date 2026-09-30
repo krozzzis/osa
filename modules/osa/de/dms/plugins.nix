@@ -32,6 +32,9 @@ delib.module {
 
   home.ifEnabled = {
     home.packages = [
+      # DMS's built-in calendar backend probes for dcal; the plugin below
+      # provides the separate dankcalendar CLI.
+      (inputs.dankcalendar.lib.mkDcal pkgs)
       dankCalendarPackage
       pkgs.libnotify
       pkgs.libsecret

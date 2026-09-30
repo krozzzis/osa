@@ -113,6 +113,10 @@
       url = "github:MoshiurRahmanAdib/Conflux-Icon-Theme";
       flake = false;
     };
+    dankcalendar = {
+      url = "github:AvengeMedia/dankcalendar";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     denix = {
       url = "github:yunfachi/denix";
       inputs = {

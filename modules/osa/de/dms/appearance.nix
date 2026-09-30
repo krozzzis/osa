@@ -20,7 +20,9 @@ delib.module {
       dockTransparency = myconfig.osa.ui.transparency;
       desktopClockTransparency = myconfig.osa.ui.transparency;
       systemMonitorTransparency = myconfig.osa.ui.transparency;
-      blurEnabled = true;
+      foregroundLayerTransparency = myconfig.osa.ui.transparency;
+      blurEnabled = myconfig.osa.ui.transparency < 1.0;
+      blurForegroundLayers = true;
       fontFamily = myconfig.user.fonts.regular.name;
       monoFontFamily = myconfig.user.fonts.monospace.name;
       # Keep DMS's own resolver and the GTK session on the same icon theme.
