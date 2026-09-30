@@ -41,7 +41,6 @@
               window_background_opacity = myconfig.osa.ui.transparency;
               text_background_opacity = 1.0;
               wayland_window_background_blur = true;
-              color_scheme = "dank-theme";
             };
           };
         };
