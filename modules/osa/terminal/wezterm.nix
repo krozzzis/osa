@@ -6,10 +6,28 @@
       delib.module {
         name = "osa.terminal.wezterm";
 
-        options = { myconfig, ... }: {
+        options = { cfg, myconfig, ... }: {
           osa.terminal.wezterm.enable = delib.boolOption myconfig.user.gui.enable;
           osa.terminal.wezterm.desktop = delib.strOption "org.wezfurlong.wezterm.desktop";
-          osa.terminal.wezterm.pkg = delib.packageOption pkgs.wezterm;
+          osa.terminal.wezterm.notifications.autoExpire = delib.description (delib.boolOption true)
+            "Use normal urgency and the notification server's default timeout for WezTerm notifications.";
+          osa.terminal.wezterm.pkg = delib.packageOption (
+            if cfg.notifications.autoExpire then
+              pkgs.wezterm.overrideAttrs (old: {
+                # WezTerm marks every DBus toast as Critical and uses an infinite
+                # timeout when none was requested. Let DMS expire routine notices.
+                postPatch = (old.postPatch or "") + ''
+                  substituteInPlace wezterm-toast-notification/src/dbus.rs \
+                    --replace-fail 'hints.insert("urgency", Value::U8(2 /* Critical */));' \
+                      'hints.insert("urgency", Value::U8(1 /* Normal */));'
+                  substituteInPlace wezterm-toast-notification/src/dbus.rs \
+                    --replace-fail 'notif.timeout.map(|d| d.as_millis() as _).unwrap_or(0),' \
+                      'notif.timeout.map(|d| d.as_millis() as _).unwrap_or(-1),'
+                '';
+              })
+            else
+              pkgs.wezterm
+          );
         };
 
         # Look & feel is personal taste -- see modules/dotfiles/wezterm.nix in the

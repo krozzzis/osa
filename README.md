@@ -50,6 +50,10 @@ nix run .#write-flake
 
 `nix flake check` fails if `flake.nix` is out of sync.
 
+WezTerm notifications use normal urgency and the notification server's default
+timeout. A downstream flake such as `osa-user` can restore WezTerm's original
+behavior by setting `myconfig.osa.terminal.wezterm.notifications.autoExpire = false;`.
+
 ## OSA CLI
 
 The `osa.system.osa-cli` module is enabled by default and installs the `osa`
