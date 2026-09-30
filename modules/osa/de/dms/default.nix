@@ -44,12 +44,6 @@
                       workspaces = workspaces.filter(ws => order.has(ws.name));
                       workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
                   }'
-                # Keep WezTerm's generated background identical to the bar's
-                # Matugen surface_container color.
-                substituteInPlace $out/share/quickshell/dms/matugen/templates/wezterm.toml \
-                  --replace-fail \
-                    "background = '{{colors.background.default.hex}}'" \
-                    "background = '{{colors.surface_container.default.hex}}'"
                 # Polkit messages often contain the executable path.  A Nix store
                 # hash is useful for reproducibility but is not a useful identity
                 # in an authentication dialog, so retain the package name instead.
