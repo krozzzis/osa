@@ -26,6 +26,7 @@ let
       mainProgram = "dankcalendar";
     };
   };
+  dcalPackage = inputs.dankcalendar.lib.mkDcal pkgs;
 in
 delib.module {
   name = "osa.de.dms";
@@ -34,11 +35,25 @@ delib.module {
     home.packages = [
       # DMS's built-in calendar backend probes for dcal; the plugin below
       # provides the separate dankcalendar CLI.
-      (inputs.dankcalendar.lib.mkDcal pkgs)
+      dcalPackage
       dankCalendarPackage
       pkgs.libnotify
       pkgs.libsecret
     ];
+
+    systemd.user.services.dcal = {
+      Unit = {
+        Description = "Dank Calendar";
+        After = [ "graphical-session.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${lib.getExe dcalPackage} run --session --hidden";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
 
     programs.dank-material-shell.plugins = {
       dankBatteryAlerts = {
