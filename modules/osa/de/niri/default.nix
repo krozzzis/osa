@@ -28,12 +28,44 @@ in
           })
           inputs.niri-pkgs.overlays.niri
         ];
+        shakePatch = pkgs.fetchurl {
+          # https://github.com/niri-wm/niri/pull/2797
+          name = "2797.patch";
+          url = "https://github.com/SergioRibera/niri/compare/4294948cf1c70c50e938383c2c865d7ca455ac7e...965782049cac311fb7e1fe006d7c9b9a9200505d.patch";
+          hash = "sha256-ZJiXdYT7on+hAoU2Sh0RlfDE4a0Ta/JYtMC5jUU6Wf8=";
+        };
       in
       delib.module {
         name = "osa.de.niri";
 
         options = { myconfig, ... }: {
           osa.de.niri.enable = delib.boolOption false;
+          osa.de.niri.pkg = delib.packageOption (
+            niriPkgs.niri-unstable.overrideAttrs (old: {
+              # The PR is a series of commits touching the same files; patch(1)
+              # cannot apply the series as one file, while git apply can.
+              nativeBuildInputs =
+                (old.nativeBuildInputs or [ ])
+                ++ lib.optionals myconfig.osa.de.niri.shakeToFind.enable [ pkgs.git ];
+              postPatch =
+                (old.postPatch or "")
+                + lib.optionalString myconfig.osa.de.niri.shakeToFind.enable ''
+                  git apply ${shakePatch}
+                '';
+              postFixup = (old.postFixup or "") + ''
+                substituteInPlace $out/bin/niri-session \
+                  --replace-fail \
+                    'systemctl --user import-environment' \
+                    'niri_environment=
+                    [ -z "''${WAYLAND_DISPLAY-}" ] || niri_environment="$niri_environment WAYLAND_DISPLAY"
+                    [ -z "''${DISPLAY-}" ] || niri_environment="$niri_environment DISPLAY"
+                    [ -z "''${XDG_SESSION_TYPE-}" ] || niri_environment="$niri_environment XDG_SESSION_TYPE"
+                    [ -z "''${XDG_CURRENT_DESKTOP-}" ] || niri_environment="$niri_environment XDG_CURRENT_DESKTOP"
+                    [ -z "''${NIRI_SOCKET-}" ] || niri_environment="$niri_environment NIRI_SOCKET"
+                    [ -z "$niri_environment" ] || systemctl --user import-environment $niri_environment'
+              '';
+            })
+          );
           osa.de.niri.launcher.default = lib.mkOption {
             type = lib.types.attrs;
             default = {
@@ -44,26 +76,13 @@ in
 
         nixos.always.imports = [ inputs.niri-pkgs.nixosModules.niri ];
 
-        nixos.ifEnabled = {
+        nixos.ifEnabled = { cfg, ... }: {
           programs.niri.enable = true;
           # greetd starts niri-session before a Wayland socket exists. Importing a
           # fixed list then makes systemctl print "$WAYLAND_DISPLAY not set" to the
           # VT, which becomes visible during the greeter -> session handoff. Import
           # only variables that actually exist in the login environment.
-          programs.niri.package = niriPkgs.niri-unstable.overrideAttrs (old: {
-            postFixup = (old.postFixup or "") + ''
-              substituteInPlace $out/bin/niri-session \
-                --replace-fail \
-                  'systemctl --user import-environment' \
-                  'niri_environment=
-                  [ -z "''${WAYLAND_DISPLAY-}" ] || niri_environment="$niri_environment WAYLAND_DISPLAY"
-                  [ -z "''${DISPLAY-}" ] || niri_environment="$niri_environment DISPLAY"
-                  [ -z "''${XDG_SESSION_TYPE-}" ] || niri_environment="$niri_environment XDG_SESSION_TYPE"
-                  [ -z "''${XDG_CURRENT_DESKTOP-}" ] || niri_environment="$niri_environment XDG_CURRENT_DESKTOP"
-                  [ -z "''${NIRI_SOCKET-}" ] || niri_environment="$niri_environment NIRI_SOCKET"
-                  [ -z "$niri_environment" ] || systemctl --user import-environment $niri_environment'
-            '';
-          });
+          programs.niri.package = cfg.pkg;
 
           # use the gnome polkit rather than the kde one installed
           # by default with the niri flake
@@ -109,6 +128,10 @@ in
             wtype
           ];
 
+        };
+
+        home.ifEnabled = { cfg, ... }: {
+          programs.niri.package = cfg.pkg;
         };
 
       }
