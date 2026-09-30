@@ -248,6 +248,26 @@ the selected Wine package and its normal default prefix. Set
 `osa.apps.wine.defaultApplication = false` to retain Wine without claiming
 Windows file associations.
 
+### WinApps
+
+WinApps uses a Docker Windows VM. Home Manager creates its Compose and WinApps
+configuration and a private, persistent Windows password. The first launch
+downloads and installs Windows 11 Pro, so it can take some time. The Windows
+disk is kept in the `winapps_data` Docker volume. Files in
+`~/Documents/VMShared` are available to Windows through `\\host.lan\Data`.
+For example:
+
+```bash
+winapps-exe ~/Documents/VMShared/SIANRG.EXE
+```
+
+`winapps-exe` creates the VM on first use, waits for RDP, then launches the
+program as a RemoteApp window. WinApps stops the VM five minutes after its
+last application window closes and starts it for the next launch. The VM does
+not start at boot. On Wayland, RemoteApp uses XFreeRDP through XWayland; Niri
+already starts `xwayland-satellite`. The Windows desktop for initial setup is
+available at `http://127.0.0.1:8006` while the VM is running.
+
 ## Stable system, independently selected applications
 
 OSA declares `nixpkgs-stable` (currently `nixos-26.05`) and
