@@ -1,4 +1,4 @@
-{ delib, ... }:
+{ delib, lib, ... }:
 delib.module {
   name = "osa.de.dms";
 
@@ -16,13 +16,14 @@ delib.module {
       matugenTemplateKcolorscheme = true;
       matugenTemplateHyprland = false;
       matugenTemplateMangowc = false;
-      popupTransparency = myconfig.osa.ui.transparency;
+      popupTransparency = lib.mkDefault myconfig.osa.ui.transparency;
       dockTransparency = myconfig.osa.ui.transparency;
       desktopClockTransparency = myconfig.osa.ui.transparency;
       systemMonitorTransparency = myconfig.osa.ui.transparency;
       foregroundLayerTransparency = myconfig.osa.ui.transparency;
       blurEnabled = myconfig.osa.ui.transparency < 1.0;
-      blurForegroundLayers = true;
+      # Opaque cards over a translucent popup hide the background blur.
+      blurForegroundLayers = myconfig.osa.ui.transparency == 1.0;
       fontFamily = myconfig.user.fonts.regular.name;
       monoFontFamily = myconfig.user.fonts.monospace.name;
       # Keep DMS's own resolver and the GTK session on the same icon theme.
