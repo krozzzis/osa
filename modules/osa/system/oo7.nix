@@ -16,6 +16,10 @@ delib.module {
       [ ../../../lib/compat/oo7.nix ];
 
   nixos.ifEnabled = {
+    # greetd authenticates DMS sessions. Stable NixOS has its own PAM stack;
+    # newer NixOS includes login's stack, which already enables oo7.
+    security.pam.services.greetd.oo7.enable = true;
+
     # oo7 owns both Secret Service APIs: the traditional D-Bus API used by
     # libsecret/Electron/browsers and the portal API used by sandboxed apps.
     services.oo7.enable = true;

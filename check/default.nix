@@ -172,6 +172,22 @@ delib.host {
             }
             {
               assertion =
+                let
+                  greetdPam = config.security.pam.services.greetd.text;
+                  loginPam = config.security.pam.services.login.text;
+                in
+                config.services.greetd.enable
+                && (
+                  lib.hasInfix "pam_oo7.so" greetdPam
+                  || (
+                    lib.hasInfix "auth substack login" greetdPam
+                    && lib.hasInfix "pam_oo7.so" loginPam
+                  )
+                );
+              message = "greetd must capture the login password and unlock oo7 for Chromium.";
+            }
+            {
+              assertion =
                 osa.apps.rustdesk.pkg.drvPath == osa.nixpkgs.packages.stable.rustdesk-flutter.drvPath
                 && osa.editor.zed.pkg.drvPath == osa.nixpkgs.packages.unstable.zed-editor.drvPath
                 && osa.editor.nixvim.pkg.drvPath == osa.nixpkgs.packages.unstable.neovim.drvPath
