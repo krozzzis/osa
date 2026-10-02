@@ -1,0 +1,2 @@
+# Unified patches use a space to mark empty context lines.
+modules/osa/de/niri/*.patch whitespace=-blank-at-eol

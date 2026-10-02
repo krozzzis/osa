@@ -1,0 +1,43 @@
+--- a/src/cursor.rs
++++ b/src/cursor.rs
+@@ -101,26 +101,20 @@
+         let nat_size = self.effective_cursor_pixel_size(scale, fractional_scale) as f64;
+         let mult = self.dynamic_size_multiplier.get() as f64;
+         let desired = nat_size * mult;
+-        let rescale = if pixel_size > 0 {
+-            desired / pixel_size as f64
+-        } else {
+-            1.0
+-        };
+-        self.get_cursor_with_name(icon, scale, fractional_scale)
+-            .map(|cursor| RenderCursor::Named {
+-                icon,
+-                scale,
+-                cursor,
+-                pixel_size,
+-                rescale,
+-            })
+-            .unwrap_or_else(|| RenderCursor::Named {
+-                icon: Default::default(),
+-                scale,
+-                cursor: self.get_default_cursor(scale, fractional_scale),
+-                pixel_size,
+-                rescale,
+-            })
++        let cursor = self
++            .get_cursor_with_name(icon, scale, fractional_scale)
++            .unwrap_or_else(|| self.get_default_cursor(scale, fractional_scale));
++        // Themes may return a different nominal size than requested, and the
++        // built-in fallback has only one size. Scale the image we actually got.
++        let image_size = cursor.images[0].size.max(1) as f64;
++        let rescale = desired / image_size;
++        RenderCursor::Named {
++            icon,
++            scale,
++            cursor,
++            pixel_size,
++            rescale,
++        }
+     }
+ 
+     pub fn is_current_cursor_animated(&self, scale: i32) -> bool {

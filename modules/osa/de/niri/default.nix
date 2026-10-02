@@ -51,6 +51,7 @@ in
                 (old.postPatch or "")
                 + lib.optionalString myconfig.osa.de.niri.shakeToFind.enable ''
                   git apply ${shakePatch}
+                  git apply ${./shake-cursor-size.patch}
                 '';
               postFixup = (old.postFixup or "") + ''
                 substituteInPlace $out/bin/niri-session \
