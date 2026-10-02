@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         OSA Video Fullscreen Zoom
 // @namespace    osa.browser.zenBrowser
-// @version      1.0.0
-// @description  Grow HTML video players from their page position into fullscreen.
+// @version      2.0.0
+// @description  Grow HTML video players before entering fullscreen.
 // @match        http://*/*
 // @match        https://*/*
 // @run-at       document-start
@@ -18,68 +18,97 @@
   const page = unsafeWindow;
   const requestFullscreen = page.Element.prototype.requestFullscreen;
   const duration = 260;
-  let pending = null;
   let enabled = false;
+  let pending = null;
 
   GM_xmlhttpRequest({
     method: "GET",
     url: "http://127.0.0.1:17837/enabled",
     timeout: 3000,
-    onload: (response) => { enabled = response.status === 200 && response.responseText.trim() === "1"; },
+    // Each revision uses a new token so old imported scripts become inert.
+    onload: (response) => { enabled = response.status === 200 && response.responseText.trim() === "2"; },
   });
 
+  function restore(entry) {
+    if (entry.restored) return;
+    entry.restored = true;
+    if (pending === entry) pending = null;
+    entry.animation.cancel();
+    page.removeEventListener("resize", entry.onResize);
+    page.document.removeEventListener("fullscreenchange", entry.onFullscreenChange, true);
+    for (const [property, value, priority] of entry.styles) {
+      if (value) entry.element.style.setProperty(property, value, priority);
+      else entry.element.style.removeProperty(property);
+    }
+  }
+
   page.Element.prototype.requestFullscreen = function (...args) {
-    // Other fullscreen uses, such as slides and games, keep their own behavior.
-    const video = enabled && (this instanceof page.HTMLVideoElement ? this : this.querySelector("video"));
-    if (
-      video &&
-      this !== page.document.body &&
-      this !== page.document.documentElement &&
-      !page.document.fullscreenElement
-    ) {
-      const rect = this.getBoundingClientRect();
-      const videoRect = video.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0 && videoRect.width > 0 && videoRect.height > 0) {
-        pending = { element: this, rect };
-      }
+    if (!enabled || page.document.fullscreenElement || page.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return Reflect.apply(requestFullscreen, this, args);
+    }
+    if (pending) return pending.element === this ? pending.promise : Reflect.apply(requestFullscreen, this, args);
+
+    const video = this instanceof page.HTMLVideoElement ? this : this.querySelector("video");
+    if (!video || this === page.document.body || this === page.document.documentElement) {
+      return Reflect.apply(requestFullscreen, this, args);
     }
 
+    const rect = this.getBoundingClientRect();
+    const videoRect = video.getBoundingClientRect();
+    const width = page.innerWidth;
+    const height = page.innerHeight;
+    if (!rect.width || !rect.height || !videoRect.width || !videoRect.height || !width || !height) {
+      return Reflect.apply(requestFullscreen, this, args);
+    }
+
+    const sx = width / rect.width;
+    const sy = height / rect.height;
+    if (![sx, sy, rect.left, rect.top].every(Number.isFinite)) {
+      return Reflect.apply(requestFullscreen, this, args);
+    }
+
+    const styles = ["position", "z-index"].map((property) => [
+      property,
+      this.style.getPropertyValue(property),
+      this.style.getPropertyPriority(property),
+    ]);
+    if (page.getComputedStyle(this).position === "static") this.style.setProperty("position", "relative", "important");
+    this.style.setProperty("z-index", "2147483647", "important");
+
+    let animation;
     try {
-      const result = Reflect.apply(requestFullscreen, this, args);
-      if (pending?.element === this && result?.catch) {
-        result.catch(() => {
-          if (pending?.element === this) pending = null;
-        });
-      }
-      return result;
+      animation = this.animate(
+        [
+          { transformOrigin: "top left", translate: "0px 0px", scale: "1 1" },
+          { transformOrigin: "top left", translate: `${-rect.left}px ${-rect.top}px`, scale: `${sx} ${sy}` },
+        ],
+        { duration, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" },
+      );
     } catch (error) {
-      if (pending?.element === this) pending = null;
-      throw error;
+      for (const [property, value, priority] of styles) {
+        if (value) this.style.setProperty(property, value, priority);
+        else this.style.removeProperty(property);
+      }
+      return Reflect.apply(requestFullscreen, this, args);
     }
+
+    const entry = {
+      element: this,
+      animation,
+      styles,
+      requested: false,
+      restored: false,
+      onResize: () => { if (entry.requested) restore(entry); },
+      onFullscreenChange: () => { if (page.document.fullscreenElement === this) restore(entry); },
+    };
+    pending = entry;
+    page.addEventListener("resize", entry.onResize);
+    page.document.addEventListener("fullscreenchange", entry.onFullscreenChange, true);
+
+    entry.promise = animation.finished.then(() => {
+      entry.requested = true;
+      return Reflect.apply(requestFullscreen, this, args);
+    }).finally(() => restore(entry));
+    return entry.promise;
   };
-
-  page.document.addEventListener("fullscreenchange", () => {
-    const entry = pending;
-    pending = null;
-    if (!enabled || !entry || page.document.fullscreenElement !== entry.element) return;
-    if (page.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const end = entry.element.getBoundingClientRect();
-    if (!end.width || !end.height) return;
-
-    const dx = entry.rect.left - end.left;
-    const dy = entry.rect.top - end.top;
-    const sx = entry.rect.width / end.width;
-    const sy = entry.rect.height / end.height;
-    if (![dx, dy, sx, sy].every(Number.isFinite)) return;
-
-    // Individual transform properties leave the player's existing transform alone.
-    entry.element.animate(
-      [
-        { transformOrigin: "top left", translate: `${dx}px ${dy}px`, scale: `${sx} ${sy}` },
-        { transformOrigin: "top left", translate: "0px 0px", scale: "1 1" },
-      ],
-      { duration, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
-    );
-  }, true);
 })();

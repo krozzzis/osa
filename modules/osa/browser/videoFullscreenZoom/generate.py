@@ -46,8 +46,8 @@ def main():
             "source": base64.b64encode(SCRIPT.read_bytes()).decode("ascii"),
         }],
     }
-    # Tampermonkey 5.6 imports a new script when this hash changes; migrate
-    # existing profiles before shipping a changed provisioning document.
+    # Tampermonkey 5.6 imports a new script when this hash changes. Bump the
+    # local activation token to make earlier imported revisions inert.
     contents = json.dumps(document, separators=(",", ":"), ensure_ascii=False) + "\n"
     digest = "1:" + tm_hash(document) + "\n"
     if args.check:

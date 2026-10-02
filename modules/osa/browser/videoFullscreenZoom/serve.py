@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
         def do_GET(self):
             if self.path == "/enabled":
-                payload = b"1\n"
+                payload = b"2\n"
                 self.send_response(200)
                 self.send_header("Content-Type", "text/plain")
                 self.send_header("Content-Length", str(len(payload)))
