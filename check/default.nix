@@ -41,6 +41,7 @@ delib.host {
     };
     osa.taskManager.missionCenter.enable = true;
     osa.apps.foliate.enable = true;
+    osa.apps.steam.enable = true;
     osa.fileManager.dolphin.enable = true;
     osa.fileManager.flux.enable = true;
     osa.apps.cosmic.enable = true;
