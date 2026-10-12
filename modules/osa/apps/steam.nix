@@ -23,7 +23,11 @@
         nixos.ifEnabled = { cfg, ... }: {
           programs.steam = {
             enable = true;
-            package = cfg.pkg;
+            # gamescope inside the FHS env so launch options can wrap games
+            # on non-stacking compositors (e.g. fullscreen games on niri).
+            package = cfg.pkg.override {
+              extraPkgs = p: [ p.gamescope ];
+            };
             remotePlay.openFirewall = cfg.firewall;
             localNetworkGameTransfers.openFirewall = cfg.firewall;
             extraCompatPackages = lib.optionals cfg.protonGe [ pkgs.proton-ge-bin ];
