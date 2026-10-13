@@ -26,6 +26,10 @@
 
         home.ifEnabled = { cfg, ... }: {
           home.packages = [ cfg.pkg ];
+
+          home.activation.zenBitwardenNotification = inputs.home-manager.lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            ${pkgs.python3}/bin/python3 ${./zenBrowser/bitwarden-notification.py} "$HOME/.config/zen"
+          '';
         };
       }
     ))
