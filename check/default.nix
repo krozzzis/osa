@@ -65,6 +65,7 @@ delib.host {
     osa.network.yggdrasil.enable = true;
     osa.system.printing.enable = true;
     osa.shell.fzf.enable = true;
+    osa.shell.nixFastBuild.enable = true;
     osa.system.libvirtd.enable = true;
     osa.system.ntfs.enable = true;
     osa.system.hibernate.enable = true;
