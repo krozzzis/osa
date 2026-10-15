@@ -225,6 +225,10 @@ delib.host {
               assertion = builtins.elem "ru_RU.UTF-8/UTF-8" config.i18n.supportedLocales;
               message = "Wine profile locales must be generated on NixOS.";
             }
+            {
+              assertion = config.services.ntpd-rs.enable && !config.services.timesyncd.enable;
+              message = "ntpd-rs must be the default time service on both system channels.";
+            }
           ];
       })
     ];
