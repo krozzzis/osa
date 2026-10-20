@@ -65,6 +65,19 @@ run_privileged() {
   fi
 }
 
+has_nom() {
+  command -v nom >/dev/null 2>&1
+}
+
+# Build through nom (nix-output-monitor) when available, plain nix otherwise.
+run_build() {
+  if has_nom; then
+    run_in_config nom build "$@"
+  else
+    run_in_config nix build "$@"
+  fi
+}
+
 write_flake() {
   echo "==> Regenerating $config_dir/flake.nix" >&2
   run_in_config nix run .#write-flake
@@ -102,7 +115,12 @@ rebuild() {
   local action=$1
   write_flake
   echo "==> Running nixos-rebuild $action for $configuration" >&2
-  run_privileged nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
+  if has_nom; then
+    run_privileged nixos-rebuild "$action" --flake "$config_dir#$configuration" \
+      --log-format internal-json "${extra_args[@]}" |& nom --json
+  else
+    run_privileged nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
+  fi
 }
 
 flake_has_attr() {
@@ -118,7 +136,7 @@ build_system_image() {
   for image_attr in sdImage isoImage; do
     if flake_has_attr "$prefix.$image_attr"; then
       echo "==> Building $image_attr for $configuration" >&2
-      run_in_config nix build ".#$prefix.$image_attr" "${extra_args[@]}"
+      run_build ".#$prefix.$image_attr" "${extra_args[@]}"
       return
     fi
   done
@@ -129,7 +147,7 @@ build_system_image() {
 build_installer() {
   write_flake
   echo "==> Building installer for $configuration" >&2
-  run_in_config nix build ".#$configuration-installer" "${extra_args[@]}"
+  run_build ".#$configuration-installer" "${extra_args[@]}"
 }
 
 if (($# == 0)); then

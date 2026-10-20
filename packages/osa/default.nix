@@ -1,9 +1,13 @@
-{ pkgs }:
+{
+  pkgs,
+  nom ? pkgs.nix-output-monitor,
+}:
 let
   package = pkgs.writeShellApplication {
     name = "osa";
     runtimeInputs = with pkgs; [
       coreutils
+      nom
       glibc.bin
       home-manager
       nix
