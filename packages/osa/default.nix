@@ -11,7 +11,7 @@ let
       glibc.bin
       home-manager
       nix
-      nixos-rebuild
+      nvd
       systemd
       util-linux
     ];

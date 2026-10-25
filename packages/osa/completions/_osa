@@ -1,7 +1,7 @@
 #compdef osa
 
 _osa_configuration_names() {
-  local config_dir=$HOME/osa-user i
+  local config_dir=${OSA_CONFIG:-$HOME/osa-user} i
 
   for ((i = 2; i < CURRENT; i++)); do
     case ${words[i]} in
@@ -25,6 +25,11 @@ _osa() {
 
   _arguments -C \
     '(-c --config)'{-c,--config}'[configuration flake]:flake directory:_directories' \
+    '(-u --update)'{-u,--update}'[update inputs before building]' \
+    '(-a --ask)'{-a,--ask}'[confirm before activation]' \
+    '(-n --dry)'{-n,--dry}'[build and compare without activation]' \
+    '--no-nom[use plain Nix output]' \
+    '--no-diff[skip generation comparison]' \
     '(-h --help)'{-h,--help}'[show help]' \
     '1:command:->command' \
     '*::argument:->arguments'
@@ -38,6 +43,8 @@ _osa() {
         'update-boot:update and activate the configuration on next boot'
         'switch:build and activate the configuration now'
         'boot:build and activate the configuration on next boot'
+        'test:activate without adding a boot generation'
+        'build:build the system without activation'
         'build-iso:build a bootable system image'
         'build-installer:build an installer package'
         'clean:delete old Home Manager and Nix generations, then run GC'

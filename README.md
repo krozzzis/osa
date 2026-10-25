@@ -63,23 +63,38 @@ command. It operates on a downstream configuration flake (by default
 ```bash
 osa update
 osa update-osa
-osa switch nixlaptop-niri
+osa switch nixlaptop-niri --ask
 osa update-switch nixlaptop-niri
 osa update-boot --config ~/other-config my-host
+osa build nixlaptop-niri
+osa test nixlaptop-niri
+osa switch nixlaptop-niri --update --dry
 osa build-iso pi-backup
 osa build-installer nixlaptop-niri
 osa clean
 ```
 
-`switch`, `boot`, `update-switch`, and `update-boot` use systemd's interactive
-`run0` privilege launcher for the `nixos-rebuild` step. The CLI also supports
-being launched through privilege tools such as `sudo osa ...`, `doas osa ...`,
-`run0 osa ...`, and `pkexec osa ...`. Root invocations must pass an explicit
-`--config PATH`; the CLI uses that directory's owner for user-level work, while
-privileged commands run directly without another authentication prompt. Extra
-Nix arguments can be passed after `--`. `update-osa` updates only the downstream
-flake's `osa` input. `clean` removes old Home Manager and Nix generations, then
-runs the Nix garbage collector; it uses the same privilege handling for the
+System rebuilds follow a build → compare → activate workflow. Builds run as the
+configuration owner with `nix-output-monitor` (`nom`); `nvd` shows changes from
+the running generation. Only activation requests privileges through systemd
+`run0`, with the command and configuration visible in the authentication prompt.
+A failed build or comparison stops before activation. The built system remains
+available through `result` in the configuration directory.
+
+`build` stops after comparison. `test` activates without updating the system
+profile or boot menu. `--dry` builds and compares without activation, `--ask`
+asks before activation, `--no-nom` selects plain Nix output, and `--no-diff`
+skips comparison. `--update` updates inputs first; `update-switch` and
+`update-boot` remain shortcuts. `osa os switch HOST` is also accepted.
+`OSA_CONFIG` overrides the default configuration directory; `--config` takes
+precedence. Extra Nix **build** arguments go after `--` (for example,
+`-- --show-trace`). For `update` and `update-osa`, these are flake update arguments.
+
+The CLI supports being launched through `sudo`, `doas`, `run0`, or `pkexec`.
+Root invocations require `--config PATH`; user-level work runs as that
+directory's owner and activation runs directly. `update-osa` updates only the
+downstream flake's `osa` input. `clean` removes old Home Manager and Nix
+generations, then runs garbage collection, with privilege elevation for the
 system-wide cleanup.
 
 ## Using OSA in your own configuration

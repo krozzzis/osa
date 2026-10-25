@@ -1,5 +1,5 @@
 _osa_configuration_names() {
-  local config_dir=$HOME/osa-user i word
+  local config_dir=${OSA_CONFIG:-$HOME/osa-user} i word
 
   for ((i = 1; i < COMP_CWORD; i++)); do
     word=${COMP_WORDS[i]}
@@ -30,7 +30,7 @@ _osa() {
 
   for word in "${COMP_WORDS[@]:1}"; do
     case $word in
-      update|update-osa|update-switch|update-boot|switch|boot|build-iso|build-installer|clean|help)
+      update|update-osa|update-switch|update-boot|switch|boot|test|build|build-iso|build-installer|clean|help)
         command=$word
         break
         ;;
@@ -38,9 +38,9 @@ _osa() {
   done
 
   if [[ -z $command ]]; then
-    COMPREPLY=($(compgen -W 'update update-osa update-switch update-boot switch boot build-iso build-installer clean help' -- "$cur"))
+    COMPREPLY=($(compgen -W 'update update-osa update-switch update-boot switch boot test build build-iso build-installer clean help' -- "$cur"))
   elif [[ $cur == -* ]]; then
-    COMPREPLY=($(compgen -W '-c --config -h --help --' -- "$cur"))
+    COMPREPLY=($(compgen -W '-c --config -u --update -a --ask -n --dry --no-nom --no-diff -h --help --' -- "$cur"))
   elif [[ $command != update && $command != update-osa && $command != clean && $command != help ]]; then
     COMPREPLY=($(compgen -W "$(_osa_configuration_names)" -- "$cur"))
   fi

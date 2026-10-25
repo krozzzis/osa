@@ -11,7 +11,7 @@ die() {
 
 invoking_user=
 user_home=$HOME
-default_config_dir="${user_home}/osa-user"
+default_config_dir="${OSA_CONFIG:-${user_home}/osa-user}"
 
 usage() {
   cat <<EOF
@@ -26,12 +26,19 @@ Commands:
   update-boot      Update, then activate the configuration on next boot
   switch           Build and activate the configuration now
   boot             Build and activate the configuration on next boot
+  test             Build and activate without adding a boot generation
+  build            Build the system without activating it
   build-iso        Build a bootable ready-to-run image (sdImage or isoImage)
   build-installer  Build the <configuration>-installer package
   clean            Delete old Home Manager and Nix generations, then run GC
 
 Options:
   -c, --config PATH  Configuration flake (default: $default_config_dir)
+  -u, --update       Update inputs before building
+  -a, --ask          Confirm before activation
+  -n, --dry          Build and show changes without activating
+      --no-nom       Use plain Nix build output
+      --no-diff      Skip the generation comparison
   -h, --help         Show this help
 
 Examples:
@@ -61,12 +68,18 @@ run_privileged() {
   if ((EUID == 0)); then
     "$@"
   else
-    run0 "$@"
+    # Polkit's StartTransientUnit prompt shows the unit name, not Description.
+    # Keep the operation readable and leave room for a unique invocation suffix.
+    local unit_label="osa-$command${configuration:+-$configuration}"
+    unit_label=${unit_label//[^a-zA-Z0-9_.-]/_}
+    unit_label=${unit_label:0:180}
+    run0 --unit="$unit_label-p$$-$RANDOM.service" \
+      --description="OSA: $command${configuration:+ $configuration}" "$@"
   fi
 }
 
 has_nom() {
-  command -v nom >/dev/null 2>&1
+  [[ $no_nom == false ]] && command -v nom >/dev/null 2>&1
 }
 
 # Build through nom (nix-output-monitor) when available, plain nix otherwise.
@@ -112,15 +125,46 @@ clean_system() {
 }
 
 rebuild() {
-  local action=$1
-  write_flake
-  echo "==> Running nixos-rebuild $action for $configuration" >&2
-  if has_nom; then
-    run_privileged nixos-rebuild "$action" --flake "$config_dir#$configuration" \
-      --log-format internal-json "${extra_args[@]}" |& nom --json
+  local action=$1 system_path answer attr_configuration
+  attr_configuration=${configuration//\\/\\\\}
+  attr_configuration=${attr_configuration//\"/\\\"}
+  if [[ $update == true ]]; then
+    update_flake
   else
-    run_privileged nixos-rebuild "$action" --flake "$config_dir#$configuration" "${extra_args[@]}"
+    write_flake
   fi
+  echo "==> Building $configuration" >&2
+  system_path=$(run_build ".#nixosConfigurations.\"$attr_configuration\".config.system.build.toplevel" \
+    "${extra_args[@]}" --out-link "$config_dir/result" --print-out-paths)
+  [[ $system_path == /nix/store/* && -x $system_path/bin/switch-to-configuration ]] \
+    || die "build did not return a NixOS system"
+
+  if [[ $no_diff == false && -e /run/current-system ]]; then
+    echo "==> Comparing generations" >&2
+    run_unprivileged nvd diff /run/current-system "$system_path"
+  fi
+  if [[ $action == build || $dry == true ]]; then
+    echo "==> Built $system_path" >&2
+    return
+  fi
+  if [[ $ask == true ]]; then
+    read -r -p "Activate $configuration ($action)? [y/N] " answer || return 1
+    case $answer in
+      y|Y|yes|YES) ;;
+      *) echo "==> Activation cancelled" >&2; return 0 ;;
+    esac
+  fi
+  echo "==> Activating $configuration ($action)" >&2
+  # Keep the profile update and activation in one authorization request. Pass
+  # paths as arguments so configuration names never become shell source.
+  # shellcheck disable=SC2016
+  run_privileged "$(command -v bash)" -c '
+    set -euo pipefail
+    if [[ $2 != test ]]; then
+      "$3" --profile /nix/var/nix/profiles/system --set "$1"
+    fi
+    exec "$1/bin/switch-to-configuration" "$2"
+  ' "$program" "$system_path" "$action" "$(command -v nix-env)"
 }
 
 flake_has_attr() {
@@ -157,10 +201,22 @@ fi
 
 command=$1
 shift
+[[ $command == -h || $command == --help ]] && command=help
+# Accept the familiar nh-style system command group as well.
+if [[ $command == os ]]; then
+  (($#)) || die "os requires a command"
+  command=$1
+  shift
+fi
 config_dir=$default_config_dir
 config_explicit=false
 configuration=
 extra_args=()
+no_nom=false
+no_diff=false
+ask=false
+dry=false
+update=false
 
 while (($#)); do
   case $1 in
@@ -175,6 +231,11 @@ while (($#)); do
       config_explicit=true
       shift
       ;;
+    -u|--update) update=true; shift ;;
+    -a|--ask) ask=true; shift ;;
+    -n|--dry) dry=true; shift ;;
+    --no-nom) no_nom=true; shift ;;
+    --no-diff) no_diff=true; shift ;;
     -h|--help)
       usage
       exit 0
@@ -194,6 +255,13 @@ while (($#)); do
       ;;
   esac
 done
+
+if [[ $update == true || $ask == true || $dry == true || $no_diff == true ]]; then
+  case $command in
+    switch|boot|test|build|update-switch|update-boot) ;;
+    *) die "--update, --ask, --dry and --no-diff require a system build command" ;;
+  esac
+fi
 
 needs_config=true
 [[ $command == clean || $command == help ]] && needs_config=false
@@ -229,16 +297,14 @@ case $command in
     [[ -z $configuration ]] || die "the update-osa command does not take a configuration name"
     update_flake osa
     ;;
-  switch|boot)
+  switch|boot|test|build)
     [[ -n $configuration ]] || die "$command requires a configuration name"
     rebuild "$command"
     ;;
   update-switch|update-boot)
     [[ -n $configuration ]] || die "$command requires a configuration name"
-    update_flake
-    # update_flake has already generated flake.nix from the updated inputs.
-    echo "==> Running nixos-rebuild ${command#update-} for $configuration" >&2
-    run_privileged nixos-rebuild "${command#update-}" --flake "$config_dir#$configuration" "${extra_args[@]}"
+    update=true
+    rebuild "${command#update-}"
     ;;
   build-iso)
     [[ -n $configuration ]] || die "$command requires a configuration name"

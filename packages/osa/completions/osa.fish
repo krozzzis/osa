@@ -1,5 +1,5 @@
 function __osa_seen_command
-    set -l commands update update-osa update-switch update-boot switch boot build-iso build-installer clean help
+    set -l commands update update-osa update-switch update-boot switch boot test build build-iso build-installer clean help
     for word in (commandline -opc)
         contains -- $word $commands; and return 0
     end
@@ -8,7 +8,7 @@ end
 
 function __osa_needs_configuration
     set -l words (commandline -opc)
-    for command in update-switch update-boot switch boot build-iso build-installer
+    for command in update-switch update-boot switch boot test build build-iso build-installer
         contains -- $command $words; and return 0
     end
     return 1
@@ -17,6 +17,7 @@ end
 function __osa_configuration_names
     set -l words (commandline -opc)
     set -l config_dir $HOME/osa-user
+    set -q OSA_CONFIG; and test -n "$OSA_CONFIG"; and set config_dir $OSA_CONFIG
 
     for i in (seq (count $words))
         switch $words[$i]
@@ -46,3 +47,10 @@ complete -c osa -n 'not __osa_seen_command' -a help -d 'Show help'
 complete -c osa -s c -l config -r -a '(__fish_complete_directories)' -d 'Configuration flake'
 complete -c osa -s h -l help -d 'Show help'
 complete -c osa -n __osa_needs_configuration -a '(__osa_configuration_names)' -d Configuration
+complete -c osa -n 'not __osa_seen_command' -a test -d 'Activate without adding a boot generation'
+complete -c osa -n 'not __osa_seen_command' -a build -d 'Build the system without activation'
+complete -c osa -s u -l update -d 'Update inputs before building'
+complete -c osa -s a -l ask -d 'Confirm before activation'
+complete -c osa -s n -l dry -d 'Build and compare without activation'
+complete -c osa -l no-nom -d 'Use plain Nix output'
+complete -c osa -l no-diff -d 'Skip generation comparison'
