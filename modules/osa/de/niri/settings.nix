@@ -20,6 +20,9 @@ delib.module {
       # -- environment variables within niri
       environment = {
         DISPLAY = ":0";
+        # Java AWT otherwise assumes a reparenting X11 window manager and can
+        # leave dialogs blank under xwayland-satellite (e.g. STM32CubeMX).
+        _JAVA_AWT_WM_NONREPARENTING = "1";
         QT_QPA_PLATFORM = "wayland";
       };
 
