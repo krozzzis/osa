@@ -65,30 +65,12 @@ run_in_config() {
 }
 
 run_privileged() {
-  if ((EUID == 0)); then
-    "$@"
-  else
-    # Polkit's StartTransientUnit prompt shows the unit name, not Description.
-    # Keep the operation readable and leave room for a unique invocation suffix.
-    local unit_label="osa-$command${configuration:+-$configuration}"
-    unit_label=${unit_label//[^a-zA-Z0-9_.-]/_}
-    unit_label=${unit_label:0:180}
-    run0 --unit="$unit_label-p$$-$RANDOM.service" \
-      --description="OSA: $command${configuration:+ $configuration}" "$@"
-  fi
+  NH_OSA_COMMAND=$command NH_OSA_HOST=$configuration osa-elevate "$@"
 }
 
-has_nom() {
-  [[ $no_nom == false ]] && command -v nom >/dev/null 2>&1
-}
-
-# Build through nom (nix-output-monitor) when available, plain nix otherwise.
-run_build() {
-  if has_nom; then
-    run_in_config nom build "$@"
-  else
-    run_in_config nix build "$@"
-  fi
+run_nh() {
+  run_in_config env NH_OSA_COMMAND="$command" NH_OSA_HOST="$configuration" \
+    NH_OSA_CONFIG="$config_dir" nh "$@"
 }
 
 write_flake() {
@@ -116,55 +98,40 @@ update_flake() {
 }
 
 clean_system() {
-  echo "==> Deleting old Home Manager generations" >&2
-  run_unprivileged home-manager expire-generations now
-  echo "==> Deleting old user Nix generations and collecting garbage" >&2
-  run_unprivileged nix-collect-garbage --delete-old
-  echo "==> Deleting old system Nix generations and collecting garbage" >&2
-  run_privileged nix-collect-garbage --delete-old
+  # Keep cleanup scoped to generations, as before; don't remove project roots.
+  run_unprivileged nh clean user --no-gc --no-gcroots --no-direnv
+  run_privileged nh clean all --no-gcroots --no-direnv
 }
 
 rebuild() {
-  local action=$1 system_path answer attr_configuration
-  attr_configuration=${configuration//\\/\\\\}
-  attr_configuration=${attr_configuration//\"/\\\"}
+  local action=$1
+  local -a nh_args=(--hostname "$configuration" --out-link "$config_dir/result")
+  [[ $no_nom == true ]] && nh_args+=(--no-nom)
+  if [[ $no_diff == true ]]; then
+    nh_args+=(--diff never)
+  else
+    nh_args+=(--diff always)
+  fi
+  [[ $dry == true ]] && action=build
   if [[ $update == true ]]; then
     update_flake
   else
     write_flake
   fi
-  echo "==> Building $configuration" >&2
-  system_path=$(run_build ".#nixosConfigurations.\"$attr_configuration\".config.system.build.toplevel" \
-    "${extra_args[@]}" --out-link "$config_dir/result" --print-out-paths)
-  [[ $system_path == /nix/store/* && -x $system_path/bin/switch-to-configuration ]] \
-    || die "build did not return a NixOS system"
-
-  if [[ $no_diff == false && -e /run/current-system ]]; then
-    echo "==> Comparing generations" >&2
-    run_unprivileged nvd diff /run/current-system "$system_path"
+  if ((EUID == 0)); then
+    # Build and compare as the owner. NH's root phase consumes the completed
+    # store path, so it cannot accidentally build the configuration as root.
+    run_nh os build "$config_dir" "${nh_args[@]}" -- "${extra_args[@]}"
+    [[ $action == build ]] && return
+    local -a activation_args=(--bypass-root-check --elevation-strategy none --diff never --show-activation-logs)
+    [[ $ask == true ]] && activation_args+=(--ask)
+    nh os "$action" "$config_dir/result" "${activation_args[@]}"
+  else
+    [[ $ask == true && $action != build ]] && nh_args+=(--ask)
+    [[ $action != build ]] && nh_args+=(--show-activation-logs)
+    run_nh os "$action" "$config_dir" "${nh_args[@]}" \
+      --elevation-strategy "$(command -v osa-elevate)" -- "${extra_args[@]}"
   fi
-  if [[ $action == build || $dry == true ]]; then
-    echo "==> Built $system_path" >&2
-    return
-  fi
-  if [[ $ask == true ]]; then
-    read -r -p "Activate $configuration ($action)? [y/N] " answer || return 1
-    case $answer in
-      y|Y|yes|YES) ;;
-      *) echo "==> Activation cancelled" >&2; return 0 ;;
-    esac
-  fi
-  echo "==> Activating $configuration ($action)" >&2
-  # Keep the profile update and activation in one authorization request. Pass
-  # paths as arguments so configuration names never become shell source.
-  # shellcheck disable=SC2016
-  run_privileged "$(command -v bash)" -c '
-    set -euo pipefail
-    if [[ $2 != test ]]; then
-      "$3" --profile /nix/var/nix/profiles/system --set "$1"
-    fi
-    exec "$1/bin/switch-to-configuration" "$2"
-  ' "$program" "$system_path" "$action" "$(command -v nix-env)"
 }
 
 flake_has_attr() {
@@ -180,7 +147,7 @@ build_system_image() {
   for image_attr in sdImage isoImage; do
     if flake_has_attr "$prefix.$image_attr"; then
       echo "==> Building $image_attr for $configuration" >&2
-      run_build ".#$prefix.$image_attr" "${extra_args[@]}"
+      build_image "$image_attr"
       return
     fi
   done
@@ -191,7 +158,27 @@ build_system_image() {
 build_installer() {
   write_flake
   echo "==> Building installer for $configuration" >&2
-  run_build ".#$configuration-installer" "${extra_args[@]}"
+  build_image installer
+}
+
+build_image() {
+  local variant=$1 expression
+  local -a nh_args=(--diff never --no-specialisation --out-link "$config_dir/result" --impure)
+  [[ $no_nom == true ]] && nh_args+=(--no-nom)
+  # NH's image command expects config.system.build.images; OSA also supports
+  # legacy sdImage/isoImage and standalone installer packages. Adapt their
+  # derivations to NH's build input without injecting paths into Nix source.
+  if [[ $variant == installer ]]; then
+    # Nix interpolation, deliberately not shell interpolation.
+    # shellcheck disable=SC2016
+    expression='{ config.system.build.toplevel = (builtins.getFlake (builtins.getEnv "NH_OSA_CONFIG")).packages.${builtins.currentSystem}.${(builtins.getEnv "NH_OSA_HOST") + "-installer"}; }'
+  else
+    # shellcheck disable=SC2016
+    expression='{ config.system.build.toplevel = (builtins.getFlake (builtins.getEnv "NH_OSA_CONFIG")).nixosConfigurations.${builtins.getEnv "NH_OSA_HOST"}.config.system.build.${builtins.getEnv "NH_OSA_IMAGE"}; }'
+  fi
+  run_in_config env NH_OSA_CONFIG="$config_dir" NH_OSA_HOST="$configuration" \
+    NH_OSA_IMAGE="$variant" nh os build --expr "$expression" "${nh_args[@]}" \
+    -- "${extra_args[@]}"
 }
 
 if (($# == 0)); then

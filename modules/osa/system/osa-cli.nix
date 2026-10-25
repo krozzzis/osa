@@ -13,11 +13,11 @@ let
     inherit (pkgs.stdenv.hostPlatform) system;
     config = config.nixpkgs.config;
   };
-  # nom comes from nixpkgs-unstable regardless of the system channel,
+  # nh comes from nixpkgs-unstable regardless of the system channel,
   # while the osa CLI itself keeps following the module package set.
   package = import ../../../packages/osa {
     inherit pkgs;
-    nom = unstable.nix-output-monitor;
+    nh = unstable.nh;
   };
 in
 delib.module {

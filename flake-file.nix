@@ -44,7 +44,7 @@ in
 
             osa-cli = pkgs.runCommand "osa-cli-tests" { nativeBuildInputs = [ pkgs.bash ]; }
               (builtins.concatStringsSep "\n" [
-                "substitute ''${./check/osa-cli.sh} test.sh --replace-fail @osaScript@ ''${./scripts/osa/osa.sh} --replace-fail @bash@ ''${pkgs.bash}/bin/bash"
+                "substitute ''${./check/osa-cli.sh} test.sh --replace-fail @osaScript@ ''${./scripts/osa/osa.sh} --replace-fail @elevationScript@ ''${./scripts/osa/elevate.sh} --replace-fail @bash@ ''${pkgs.bash}/bin/bash"
                 "bash test.sh"
                 "touch $out"
               ]);

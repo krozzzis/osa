@@ -1,17 +1,21 @@
 {
   pkgs,
-  nom ? pkgs.nix-output-monitor,
+  nh ? pkgs.nh,
 }:
 let
+  elevation = pkgs.writeShellApplication {
+    name = "osa-elevate";
+    runtimeInputs = [ pkgs.systemd ];
+    text = builtins.readFile ../../scripts/osa/elevate.sh;
+  };
   package = pkgs.writeShellApplication {
     name = "osa";
     runtimeInputs = with pkgs; [
       coreutils
-      nom
+      nh
+      elevation
       glibc.bin
-      home-manager
       nix
-      nvd
       systemd
       util-linux
     ];

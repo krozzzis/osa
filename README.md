@@ -75,8 +75,9 @@ osa clean
 ```
 
 System rebuilds follow a build → compare → activate workflow. Builds run as the
-configuration owner with `nix-output-monitor` (`nom`); `nvd` shows changes from
-the running generation. Only activation requests privileges through systemd
+configuration owner through `nh`, including its build output and generation
+comparison. Images, installers and generation cleanup also use `nh`.
+Only activation and system cleanup request privileges through systemd
 `run0`, with the command and configuration visible in the authentication prompt.
 A failed build or comparison stops before activation. The built system remains
 available through `result` in the configuration directory.
@@ -95,7 +96,8 @@ Root invocations require `--config PATH`; user-level work runs as that
 directory's owner and activation runs directly. `update-osa` updates only the
 downstream flake's `osa` input. `clean` removes old Home Manager and Nix
 generations, then runs garbage collection, with privilege elevation for the
-system-wide cleanup.
+system-wide cleanup. Cleanup keeps the latest generation and preserves project
+GC roots; NH manages the generation retention policy.
 
 ## Using OSA in your own configuration
 
