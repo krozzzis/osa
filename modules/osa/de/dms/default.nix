@@ -13,56 +13,87 @@
 
         # DMS supports NixOS, but its doctor only checks ID=nixos and ignores
         # distributions (such as OSA) that advertise ID_LIKE=nixos.
-        dmsPackage = (inputs.dms.lib.mkDmsShell pkgs).overrideAttrs (old: {
-          # DMS stable aa4b99d changed its Go dependencies without updating the
-          # fixed-output hash in the flake.
-          vendorHash = "sha256-ejDi+TzstUtxtWpcl5yYw4UZuTnZraOsIdJuXPKxJ6s=";
-          postPatch = (old.postPatch or "") + ''
-            substituteInPlace cmd/dms/commands_doctor.go \
-              --replace-fail \
-                'case osRelease["ID"] == "nixos":' \
-                'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
-          '';
-          postInstall = (old.postInstall or "") + ''
-                substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
-                  --replace-fail \
-                    'property var workspaceNameIcons: ({})' \
-                    'property var workspaceNameIcons: ({})
-              property var workspaceNames: []'
-                substituteInPlace $out/share/quickshell/dms/Common/settings/SettingsSpec.js \
-                  --replace-fail \
-                    'workspaceNameIcons: { def: {} },' \
-                    'workspaceNameIcons: { def: {} },
-            workspaceNames: { def: [] },'
-                substituteInPlace $out/share/quickshell/dms/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
-                  --replace-fail \
-                    'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);' \
-                    'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);
+        dmsPackage = (inputs.dms.lib.mkDmsShell pkgs).overrideAttrs (
+          old:
+          {
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace cmd/dms/commands_doctor.go \
+                --replace-fail \
+                  'case osRelease["ID"] == "nixos":' \
+                  'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
+            '';
+            postInstall = (old.postInstall or "") + ''
+                if [ -f "$out/share/quickshell/dms/Widgets/WorkspaceSwitcherModel.qml" ]; then
+                  substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
+                    --replace-fail \
+                      'property var workspaceNameIcons: Spec.SPEC.workspaceNameIcons.def' \
+                      'property var workspaceNameIcons: Spec.SPEC.workspaceNameIcons.def
+                property var workspaceNames: Spec.SPEC.workspaceNames.def'
+                  substituteInPlace $out/share/quickshell/dms/Common/settings/SettingsSpec.js \
+                    --replace-fail \
+                      'workspaceNameIcons: {' \
+                      'workspaceNames: { def: [] },
+              workspaceNameIcons: {'
+                  substituteInPlace $out/share/quickshell/dms/Widgets/WorkspaceSwitcherModel.qml \
+                    --replace-fail \
+                      'const baseList = CompositorService.workspacesForScreen' \
+                      'let baseList = CompositorService.workspacesForScreen' \
+                    --replace-fail \
+                      'if (CompositorService.ephemeralWorkspaces)' \
+                      'if (CompositorService.isNiri && SettingsData.workspaceNames.length > 0) {
+                        const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
+                        baseList = baseList.filter(ws => order.has(ws.name));
+                        baseList.sort((a, b) => order.get(a.name) - order.get(b.name));
+                    }
+                    if (CompositorService.ephemeralWorkspaces)'
+                  polkitMessageProperty=supportingText
+                else
+                  substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
+                    --replace-fail \
+                      'property var workspaceNameIcons: ({})' \
+                      'property var workspaceNameIcons: ({})
+                property var workspaceNames: []'
+                  substituteInPlace $out/share/quickshell/dms/Common/settings/SettingsSpec.js \
+                    --replace-fail \
+                      'workspaceNameIcons: { def: {} },' \
+                      'workspaceNameIcons: { def: {} },
+              workspaceNames: { def: [] },'
+                  substituteInPlace $out/share/quickshell/dms/Modules/DankBar/Widgets/WorkspaceSwitcher.qml \
+                    --replace-fail \
+                      'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);' \
+                      'workspaces = workspaces.slice().sort((a, b) => a.idx - b.idx);
 
-                  if (SettingsData.workspaceNames.length > 0) {
-                      const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
-                      workspaces = workspaces.filter(ws => order.has(ws.name));
-                      workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
-                  }'
-                # Polkit messages often contain the executable path.  A Nix store
-                # hash is useful for reproducibility but is not a useful identity
-                # in an authentication dialog, so retain the package name instead.
-                substituteInPlace $out/share/quickshell/dms/Modals/PolkitAuthContent.qml \
-                  --replace-fail \
-                    'text: root.currentFlow?.message ?? ""' \
-                    'text: (root.currentFlow?.message ?? "").replace(
-                      /\/nix\/store\/[0-9a-z]{32}-([^\/\s]+)(?:\/[^\s]*)?/g,
-                      (_, packageName) => {
-                          const name = packageName.replace(/-[0-9][0-9A-Za-z.+-]*$/, "");
-                          return ({
-                              "gparted": "GParted",
-                              "nixos-rebuild": "NixOS Rebuild",
-                              "osa": "OSA"
-                          })[name] ?? name;
-                      }
-                    )'
-          '';
-        });
+                    if (SettingsData.workspaceNames.length > 0) {
+                        const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
+                        workspaces = workspaces.filter(ws => order.has(ws.name));
+                        workspaces.sort((a, b) => order.get(a.name) - order.get(b.name));
+                    }'
+                  polkitMessageProperty=text
+                fi
+                  # Polkit messages often contain the executable path.  A Nix store
+                  # hash is useful for reproducibility but is not a useful identity
+                  # in an authentication dialog, so retain the package name instead.
+                  substituteInPlace $out/share/quickshell/dms/Modals/PolkitAuthContent.qml \
+                    --replace-fail \
+                      "$polkitMessageProperty: root.currentFlow?.message ?? \"\"" \
+                      "$polkitMessageProperty:"' (root.currentFlow?.message ?? "").replace(
+                        /\/nix\/store\/[0-9a-z]{32}-([^\/\s]+)(?:\/[^\s]*)?/g,
+                        (_, packageName) => {
+                            const name = packageName.replace(/-[0-9][0-9A-Za-z.+-]*$/, "");
+                            return ({
+                                "gparted": "GParted",
+                                "nixos-rebuild": "NixOS Rebuild",
+                                "osa": "OSA"
+                            })[name] ?? name;
+                        }
+                      )'
+            '';
+          }
+          // lib.optionalAttrs ((inputs.dms.rev or "") == "aa4b99def48637d86a69620c0a8f3cc6aa0c4092") {
+            # Only this older release needs its upstream vendor hash corrected.
+            vendorHash = "sha256-ejDi+TzstUtxtWpcl5yYw4UZuTnZraOsIdJuXPKxJ6s=";
+          }
+        );
       in
       delib.module {
         name = "osa.de.dms";
