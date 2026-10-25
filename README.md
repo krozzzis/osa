@@ -369,6 +369,7 @@ unstable packages and is retained on hosts and installer images.
 | `https://walker.cachix.org`, `https://walker-git.cachix.org` | Enabled `osa.apps.walker` |
 | `https://nix-community.cachix.org` | Enabled `osa.editor.nixvim` |
 | `https://winapps.cachix.org` | Enabled `osa.apps.winapps` |
+| `https://nyx-cache.chaotic.cx` | Enabled `osa.system.cachyos`; pinned Nyx URLs and signing keys |
 
 The project keys come from the pinned upstream Niri module, Walker README,
 Nixvim flake and WinApps README. OSA adds project caches with their public keys
@@ -396,4 +397,19 @@ A matching URL and key do not guarantee that a particular derivation was
 uploaded. Source patches, custom build flags, package-set changes and generated
 application configurations can prevent hits even with the right cache enabled.
 Installer images contain the target closure for offline installation; their
-live environment retains NixOS's official cache.
+live environment retains NixOS's official cache and the target's project caches.
+
+## Optional CachyOS kernel
+
+`osa.system.cachyos.enable` defaults to `false`. Enable it per host to select
+Nyx's unmodified `linuxPackages_cachyos-lto`, including matching external
+modules and its signed binary cache. `osa.system.cachyos.variant` also accepts
+`lto-znver4` (Zen 4 or newer only), `bore`, `eevdf`, and `lts`.
+
+The `chaotic` input uses the cached `nyxpkgs-unstable` branch and retains its
+own locked nixpkgs. Do not make it follow a host/application channel or modify
+its kernel build flags: that changes store paths and loses cache hits. Check
+the exact kernel and its outputs with `nix path-info --store
+https://nyx-cache.chaotic.cx /nix/store/<kernel-output>` before building.
+Before first activation, pass Nyx's cache URL and public key explicitly to
+the build command, since the daemon still uses the running system's settings.

@@ -6,7 +6,7 @@
 #
 # Enable all OSA rice bundles at once and select niri as primary. This exercises
 # the multi-session display-manager path as well as every compositor/shell pair.
-{ delib, ... }:
+{ delib, inputs, ... }:
 delib.host {
   name = "eval-check";
 
@@ -108,6 +108,17 @@ delib.host {
           in
           [
             {
+              assertion =
+                if osa.system.cachyos.enable then
+                  config.boot.kernelPackages.kernel.drvPath
+                  == inputs.chaotic.legacyPackages.x86_64-linux.linuxPackages_cachyos-lto.kernel.drvPath
+                  && lib.elem "https://nyx-cache.chaotic.cx" caches
+                  && lib.elem "nyx-cache.chaotic.cx:dJxTrgMC3V3cFfyIiBQDQorG6k1LsqurH/srpMSq7qk=" keys
+                else
+                  !(lib.elem "https://nyx-cache.chaotic.cx" caches);
+              message = "CachyOS must retain the unmodified upstream kernel and signed cache only when enabled.";
+            }
+            {
               assertion = home.dconf.settings."io/missioncenter/MissionCenter".first-time-running == false;
               message = "Mission Center must not run its non-NixOS setup wizard at startup.";
             }
@@ -181,10 +192,7 @@ delib.host {
                 config.services.greetd.enable
                 && (
                   lib.hasInfix "pam_oo7.so" greetdPam
-                  || (
-                    lib.hasInfix "auth substack login" greetdPam
-                    && lib.hasInfix "pam_oo7.so" loginPam
-                  )
+                  || (lib.hasInfix "auth substack login" greetdPam && lib.hasInfix "pam_oo7.so" loginPam)
                 );
               message = "greetd must capture the login password and unlock oo7 for Chromium.";
             }

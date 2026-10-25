@@ -73,7 +73,12 @@ in
                       (dext.base.withConfig { args.enable = true; })
                     ];
                   specialArgs = { inherit inputs; };
-                  extraModules = [ { myconfig.osa.system.nixpkgs = channel; } ];
+                  extraModules = [ {
+                    myconfig.osa.system.nixpkgs = channel;
+                    # Exercise the opt-in kernel with stable system modules;
+                    # unstable retains the disabled-by-default branch.
+                    myconfig.osa.system.cachyos.enable = channel == "stable";
+                  } ];
                 }).eval-check.config.system.build.toplevel.drvPath;
               in
               pkgs.runCommand "osa-modules-eval" { } (
