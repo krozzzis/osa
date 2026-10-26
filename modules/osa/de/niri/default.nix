@@ -63,6 +63,7 @@ in
                     [ -z "''${XDG_SESSION_TYPE-}" ] || niri_environment="$niri_environment XDG_SESSION_TYPE"
                     [ -z "''${XDG_CURRENT_DESKTOP-}" ] || niri_environment="$niri_environment XDG_CURRENT_DESKTOP"
                     [ -z "''${NIRI_SOCKET-}" ] || niri_environment="$niri_environment NIRI_SOCKET"
+                    [ -z "''${_JAVA_AWT_WM_NONREPARENTING-}" ] || niri_environment="$niri_environment _JAVA_AWT_WM_NONREPARENTING"
                     [ -z "$niri_environment" ] || systemctl --user import-environment $niri_environment'
               '';
             })
@@ -94,6 +95,11 @@ in
           environment.variables.NIXOS_OZONE_WL = "1";
 
           environment.variables.QT_QPA_PLATFORMTHEME = "kde";
+          # DMS launches applications through systemd user services. Niri's
+          # config-level environment does not reach those processes, so also
+          # provide the AWT workaround in the login environment that
+          # niri-session imports into systemd.
+          environment.sessionVariables._JAVA_AWT_WM_NONREPARENTING = "1";
 
           xdg.portal = {
             enable = true;
