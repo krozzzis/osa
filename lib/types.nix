@@ -23,6 +23,12 @@ in
         type = types.nonEmptyStr;
         description = "Fontconfig family name.";
       };
+      disabledLigatures = mkOption {
+        type = types.listOf types.nonEmptyStr;
+        default = [ ];
+        example = [ "***" "===" ];
+        description = "Character sequences whose OpenType ligatures should be disabled by a font package that supports this option.";
+      };
     };
   };
 
