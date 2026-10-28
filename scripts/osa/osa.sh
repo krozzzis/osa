@@ -52,7 +52,7 @@ EOF
 }
 
 run_unprivileged() {
-  local github_token= nix_config
+  local github_token='' nix_config=''
   local -a user_env=(env HOME="$user_home" USER="${invoking_user:-${USER:-}}" LOGNAME="${invoking_user:-${LOGNAME:-}}" PATH="$PATH")
 
   if command -v gh >/dev/null 2>&1; then
