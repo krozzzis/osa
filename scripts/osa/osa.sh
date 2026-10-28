@@ -52,9 +52,31 @@ EOF
 }
 
 run_unprivileged() {
+  local github_token= nix_config
+  local -a user_env=(env HOME="$user_home" USER="${invoking_user:-${USER:-}}" LOGNAME="${invoking_user:-${LOGNAME:-}}" PATH="$PATH")
+
+  if command -v gh >/dev/null 2>&1; then
+    if [[ -n $invoking_user ]]; then
+      github_token=$(runuser --user "$invoking_user" -- \
+        env HOME="$user_home" USER="$invoking_user" LOGNAME="$invoking_user" PATH="$PATH" \
+        gh auth token --hostname github.com 2>/dev/null) || github_token=
+    else
+      github_token=$(gh auth token --hostname github.com 2>/dev/null) || github_token=
+    fi
+  fi
+
+  if [[ -n $github_token ]]; then
+    nix_config=${NIX_CONFIG-}
+    [[ -z $nix_config ]] || nix_config+=$'\n'
+    nix_config+="access-tokens = github.com=$github_token"
+    user_env+=("NIX_CONFIG=$nix_config")
+  fi
+
   if [[ -n $invoking_user ]]; then
     runuser --user "$invoking_user" -- \
-      env HOME="$user_home" USER="$invoking_user" LOGNAME="$invoking_user" PATH="$PATH" "$@"
+      "${user_env[@]}" "$@"
+  elif [[ -n $github_token ]]; then
+    NIX_CONFIG="$nix_config" "$@"
   else
     "$@"
   fi
