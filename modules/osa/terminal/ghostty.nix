@@ -20,6 +20,7 @@
               background-opacity = myconfig.osa.ui.transparency;
               background-blur = true;
               font-family = myconfig.user.fonts.monospace.name;
+              resize-overlay = "never";
             };
           };
         };
