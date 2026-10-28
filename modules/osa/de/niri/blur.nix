@@ -16,7 +16,6 @@ delib.module {
           # The terminal supplies window opacity; remove its opaque border so
           # compositor blur remains visible at the window edge.
           draw-border-with-background = false;
-          background-effect.blur = true;
           geometry-corner-radius = {
             top-left = r;
             top-right = r;
