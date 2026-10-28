@@ -11,8 +11,9 @@ delib.module {
         {
           matches = [
             { app-id = "^org\\.wezfurlong\\.wezterm$"; }
+            { app-id = "^com\\.mitchellh\\.ghostty$"; }
           ];
-          # WezTerm supplies window opacity; remove its opaque border so the
+          # The terminal supplies window opacity; remove its opaque border so
           # compositor blur remains visible at the window edge.
           draw-border-with-background = false;
           geometry-corner-radius = {

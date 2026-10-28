@@ -14,8 +14,8 @@ delib.module {
     user.terminal.default = lib.mkOption {
       type = osaTypes.app;
       default = {
-        pkg = myconfig.osa.terminal.wezterm.pkg;
-        desktop = "org.wezfurlong.wezterm.desktop";
+        pkg = myconfig.osa.terminal.ghostty.pkg;
+        desktop = "com.mitchellh.ghostty.desktop";
       };
       description = "Default terminal application.";
     };
