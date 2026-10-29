@@ -1,0 +1,104 @@
+--- a/src/termio/stream_handler.zig
++++ b/src/termio/stream_handler.zig
+@@ -1431,11 +1431,11 @@
+     ) !void {
+         var message = apprt.surface.Message{ .desktop_notification = undefined };
+
+-        const title_len = @min(title.len, message.desktop_notification.title.len);
++        const title_len = notificationTextLen(title, message.desktop_notification.title.len);
+         @memcpy(message.desktop_notification.title[0..title_len], title[0..title_len]);
+         message.desktop_notification.title[title_len] = 0;
+
+-        const body_len = @min(body.len, message.desktop_notification.body.len);
++        const body_len = notificationTextLen(body, message.desktop_notification.body.len);
+         @memcpy(message.desktop_notification.body[0..body_len], body[0..body_len]);
+         message.desktop_notification.body[body_len] = 0;
+
+@@ -1549,3 +1549,23 @@
+         self.surfaceMessageWriter(.{ .progress_report = report });
+     }
+ };
++
++// Keep the fixed-size notification buffers on a UTF-8 codepoint boundary.
++fn notificationTextLen(text: []const u8, max: usize) usize {
++    var len = @min(text.len, max);
++    while (len > 0 and len < text.len and text[len] & 0xC0 == 0x80) : (len -= 1) {}
++    return len;
++}
++
++test "notification truncation preserves UTF-8" {
++    const testing = std.testing;
++    const text = "Done: Готово 🐝";
++    for (0..text.len + 1) |max| {
++        const len = notificationTextLen(text, max);
++        try testing.expect(len <= max);
++        try testing.expect(std.unicode.utf8ValidateSlice(text[0..len]));
++    }
++    try testing.expectEqual(text.len, notificationTextLen(text, 255));
++    const long = "a" ** 254 ++ "я";
++    try testing.expectEqual(@as(usize, 254), notificationTextLen(long, 255));
++}
+--- a/src/apprt/gtk/class/close_confirmation_dialog.zig
++++ b/src/apprt/gtk/class/close_confirmation_dialog.zig
+@@ -1,5 +1,6 @@
+ const std = @import("std");
+ const gobject = @import("gobject");
++const gdk = @import("gdk");
+ const gtk = @import("gtk");
+
+ const gresource = @import("../build/gresource.zig");
+@@ -94,6 +95,25 @@
+         self.as(Dialog).close();
+     }
+
++    // A close confirmation is modal, so these keys cannot reach the terminal.
++    fn keyPressed(
++        _: *gtk.EventControllerKey,
++        keyval: c_uint,
++        _: c_uint,
++        mods: gdk.ModifierType,
++        self: *Self,
++    ) callconv(.c) c_int {
++        if (mods.control_mask or mods.alt_mask or mods.super_mask) return 0;
++        const is_yes = keyval == gdk.KEY_y or keyval == gdk.KEY_Y;
++        const is_no = keyval == gdk.KEY_n or keyval == gdk.KEY_N;
++        if (!is_yes and !is_no) return 0;
++
++        // Closing the dialog emits its response once, including tab cancellation.
++        self.as(Dialog.Parent).setCloseResponse(if (is_yes) "close" else "cancel");
++        self.close();
++        return 1;
++    }
++
+     fn response(
+         self: *Self,
+         response_id: [*:0]const u8,
+@@ -150,6 +170,8 @@
+                 }),
+             );
+
++            class.bindTemplateCallback("key_pressed", &keyPressed);
++
+             // Properties
+             gobject.ext.registerProperties(class, &.{
+                 properties.target.impl,
+@@ -165,6 +187,7 @@
+         }
+
+         pub const as = C.Class.as;
++        pub const bindTemplateCallback = C.Class.bindTemplateCallback;
+     };
+ };
+
+--- a/src/apprt/gtk/ui/1.2/close-confirmation-dialog.blp
++++ b/src/apprt/gtk/ui/1.2/close-confirmation-dialog.blp
+@@ -9,4 +9,9 @@
+   ]
+
+   close-response: "cancel";
++
++  EventControllerKey {
++    propagation-phase: capture;
++    key-pressed => $key_pressed();
++  }
+ }

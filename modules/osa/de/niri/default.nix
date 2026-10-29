@@ -64,6 +64,7 @@ in
                     [ -z "''${XDG_CURRENT_DESKTOP-}" ] || niri_environment="$niri_environment XDG_CURRENT_DESKTOP"
                     [ -z "''${NIRI_SOCKET-}" ] || niri_environment="$niri_environment NIRI_SOCKET"
                     [ -z "''${_JAVA_AWT_WM_NONREPARENTING-}" ] || niri_environment="$niri_environment _JAVA_AWT_WM_NONREPARENTING"
+                    [ -z "''${J2D_UISCALE-}" ] || niri_environment="$niri_environment J2D_UISCALE"
                     [ -z "$niri_environment" ] || systemctl --user import-environment $niri_environment'
               '';
             })

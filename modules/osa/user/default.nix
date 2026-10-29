@@ -191,6 +191,12 @@ delib.module {
       description = "Global UI transparency (0.0 fully transparent, 1.0 fully opaque) used for all supported apps (DMS, etc.)";
     };
 
+    user.ui.scale = lib.mkOption {
+      type = lib.types.addCheck lib.types.float (value: value > 0.0);
+      default = 1.25;
+      description = "Global Java2D UI scale, exported as J2D_UISCALE to login sessions and shells.";
+    };
+
     user.ui.fontSize = lib.mkOption {
       type = lib.types.ints.positive;
       default = 11;

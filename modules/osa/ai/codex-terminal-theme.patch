@@ -1,0 +1,148 @@
+--- a/tui/src/terminal_probe.rs
++++ b/tui/src/terminal_probe.rs
+@@ -19,7 +19,7 @@
+ #[cfg(unix)]
+ mod terminal_identity;
+
+-#[cfg(any(windows, test))]
++#[cfg(any(unix, windows, test))]
+ #[path = "terminal_probe/windows_replay.rs"]
+ mod windows_replay;
+
+@@ -259,6 +259,60 @@
+         Ok(Some(colors))
+     }
+
++    /// Refresh colors while preserving interleaved keys and bracketed paste.
++    /// The caller must pause the crossterm event broker before entering.
++    pub(crate) fn refresh_default_colors(timeout: Duration) -> io::Result<Option<DefaultColors>> {
++        let mut tty = Tty::open()?;
++        tty.write_all(b"\x1B]10;?\x1B\\\x1B]11;?\x1B\\")?;
++        let deadline = Instant::now() + timeout;
++        let mut buffer = Vec::new();
++        let result = (|| {
++            loop {
++                tty.read_available(&mut buffer, deadline, MAX_STARTUP_PROBE_BYTES)?;
++                if let Some(colors) = super::windows_replay::terminal_default_colors(&buffer) {
++                    return Ok(Some(colors));
++                }
++                let now = Instant::now();
++                if now >= deadline
++                    || buffer.len() >= MAX_STARTUP_PROBE_BYTES
++                    || !tty.poll_readable(deadline.saturating_duration_since(now))?
++                {
++                    return Ok(None);
++                }
++            }
++        })();
++        // Remove only complete, validated replies outside bracketed paste.
++        // Partial replies and all other input stay framed for crossterm.
++        crossterm::event::buffer_input(&refresh_replay_input(&buffer))?;
++        result
++    }
++
++    fn refresh_replay_input(buffer: &[u8]) -> Vec<u8> {
++        let mut replay = Vec::with_capacity(buffer.len());
++        let mut cursor = 0;
++        for range in super::windows_replay::terminal_color_response_ranges(buffer) {
++            replay.extend_from_slice(&buffer[cursor..range.start]);
++            cursor = range.end;
++        }
++        replay.extend_from_slice(&buffer[cursor..]);
++        replay
++    }
++
++    #[test]
++    fn refresh_preserves_interleaved_unicode_keys_and_paste() {
++        let input = "я\x1b]10;rgb:ffff/ffff/ffff\x07\x1b[200~paste\x1b]11;rgb:ffff/0000/0000\x07\x1b[201~\x1b]11;rgb:0000/0000/0000\x1b\\z";
++        assert_eq!(
++            String::from_utf8(refresh_replay_input(input.as_bytes())).unwrap(),
++            "я\x1b[200~paste\x1b]11;rgb:ffff/0000/0000\x07\x1b[201~z"
++        );
++    }
++
++    #[test]
++    fn refresh_preserves_partial_replies_and_unknown_osc() {
++        let input = b"x\x1b]9;hello\x07\x1b]11;rgb:ffff/";
++        assert_eq!(refresh_replay_input(input), input);
++    }
++
+     /// Queries the terminal cursor position while normal input polling is paused.
+     ///
+     /// Resume can emit a focus report immediately before the cursor-position response. Reusing
+--- a/tui/src/tui.rs
++++ b/tui/src/tui.rs
+@@ -679,6 +679,8 @@
+     alt_screen_active: Arc<AtomicBool>,
+     // True when terminal/tab is focused; updated internally from crossterm events
+     terminal_focused: Arc<AtomicBool>,
++    #[cfg(all(unix, not(test)))]
++    last_palette_refresh: std::time::Instant,
+     enhanced_keys_supported: bool,
+     // Cache the startup result so later configuration loads use the same terminal policy.
+     pub(crate) terminal_app_over_ssh: bool,
+@@ -756,6 +758,8 @@
+             suspend_context: SuspendContext::new(),
+             alt_screen_active: Arc::new(AtomicBool::new(false)),
+             terminal_focused: Arc::new(AtomicBool::new(true)),
++            #[cfg(all(unix, not(test)))]
++            last_palette_refresh: std::time::Instant::now(),
+             enhanced_keys_supported,
+             terminal_app_over_ssh: false,
+             notification_backend: Some(detect_backend(NotificationMethod::default())),
+@@ -882,6 +886,37 @@
+     // Inverse of `pause_events`.
+     pub fn resume_events(&mut self) {
+         self.event_broker.resume_events();
++    }
++
++    /// Re-read terminal colors on focus or every two seconds while visible.
++    #[cfg(all(unix, not(test)))]
++    pub(crate) fn refresh_terminal_palette(&mut self, force: bool) -> bool {
++        let interval = Duration::from_secs(2);
++        self.frame_requester.schedule_frame_in(interval);
++        if !self.is_terminal_focused() || (!force && self.last_palette_refresh.elapsed() < interval)
++        {
++            return false;
++        }
++        self.last_palette_refresh = std::time::Instant::now();
++        // Unsupported terminals never pay repeated probe timeouts.
++        let (Some(fg), Some(bg)) = (
++            crate::terminal_palette::default_fg(),
++            crate::terminal_palette::default_bg(),
++        ) else {
++            return false;
++        };
++        self.pause_events();
++        let colors = crate::terminal_probe::refresh_default_colors(Duration::from_millis(50));
++        self.resume_events();
++        let Ok(Some(colors)) = colors else {
++            return false;
++        };
++        if colors.fg == fg && colors.bg == bg {
++            return false;
++        }
++        crate::terminal_palette::set_default_colors_from_startup_probe(Some(colors));
++        self.terminal.invalidate_viewport();
++        true
+     }
+
+     /// Discover the visible Windows theme only after protected startup decisions have completed.
+--- a/tui/src/app.rs
++++ b/tui/src/app.rs
+@@ -864,6 +864,15 @@
+         app_server: &mut AppServerSession,
+         event: TuiEvent,
+     ) -> Result<AppRunControl> {
++        #[cfg(all(unix, not(test)))]
++        if !self.startup_protected_input_boundary
++            && !self.chat_widget.has_active_modal()
++            && matches!(&event, TuiEvent::Draw | TuiEvent::FocusGained)
++            && tui.refresh_terminal_palette(matches!(&event, TuiEvent::FocusGained))
++        {
++            self.restore_runtime_theme_from_config();
++            self.refresh_status_line();
++        }
+         tui.link_hover.observe(&event);
+         self.refresh_link_hover(tui)?;
+         self.invalidate_right_click_paste(&event);

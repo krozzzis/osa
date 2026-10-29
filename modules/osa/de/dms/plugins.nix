@@ -43,16 +43,18 @@ delib.module {
 
     systemd.user.services.dcal = {
       Unit = {
-        Description = "Dank Calendar";
-        After = [ "graphical-session.target" ];
-        PartOf = [ "graphical-session.target" ];
+        Description = "Dux Calendar";
+        # DMS is Type=notify: wait for its session services before calendar
+        # startup, which can otherwise stall before creating its IPC socket.
+        After = [ "dms.service" ];
+        PartOf = [ "dms.service" ];
       };
       Service = {
         ExecStart = "${lib.getExe dcalPackage} run --session --hidden";
         Restart = "on-failure";
         RestartSec = 2;
       };
-      Install.WantedBy = [ "graphical-session.target" ];
+      Install.WantedBy = [ "dms.service" ];
     };
 
     programs.dank-material-shell.plugins = {

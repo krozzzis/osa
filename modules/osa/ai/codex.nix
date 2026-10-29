@@ -13,7 +13,12 @@
 
         options = { myconfig, ... }: {
           osa.ai.codex.enable = delib.boolOption myconfig.user.gui.enable;
-          osa.ai.codex.pkg = delib.packageOption pkgs.codex;
+          osa.ai.codex.pkg = delib.packageOption (
+            pkgs.codex.overrideAttrs (old: {
+              # Follow live terminal colors without consuming interleaved input.
+              patches = (old.patches or [ ]) ++ [ ./codex-terminal-theme.patch ];
+            })
+          );
           osa.ai.codex.settings = lib.mkOption {
             type = (pkgs.formats.toml { }).type;
             default = { };

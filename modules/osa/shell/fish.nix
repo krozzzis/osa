@@ -22,6 +22,7 @@
 
         home.always.imports = [
           (import ../../../lib/compat/fish.nix { homeManager = inputs.home-manager; })
+          inputs.nix-index-database.homeModules.default
         ];
 
         nixos.always.imports = [
@@ -41,6 +42,16 @@
           };
 
           programs.fzf.enableFishIntegration = myconfig.osa.shell.fzf.enable;
+
+          programs.nix-your-shell = {
+            enable = true;
+            enableFishIntegration = true;
+          };
+
+          programs.nix-index = {
+            enable = true;
+            enableFishIntegration = true;
+          };
         };
 
         nixos.ifEnabled =
