@@ -45,6 +45,9 @@ delib.module {
         settings = lib.mkForce { };
       };
 
+      # DMS switches between these two GTK3 themes for light and dark mode.
+      home.packages = [ pkgs.adw-gtk3 ];
+
       # Multiple installed rice bundles must not start multiple shells.
       systemd.user.services.dms.Unit.ConditionEnvironment = [
         "|XDG_CURRENT_DESKTOP=niri"

@@ -23,6 +23,26 @@
                   'case osRelease["ID"] == "nixos" || strings.Contains(osRelease["ID_LIKE"], "nixos"):'
             '';
             postInstall = (old.postInstall or "") + ''
+                # A light DMS mode must be an explicit portal preference. A
+                # stale dark GTK theme otherwise wins over "no preference".
+                substituteInPlace "$out/share/quickshell/dms/Services/PortalService.qml" \
+                  --replace-fail \
+                    'const targetScheme = isLightMode ? (preferLight ? "prefer-light" : "default") : "prefer-dark";' \
+                    'const targetScheme = isLightMode ? "prefer-light" : "prefer-dark";' \
+                  --replace-fail \
+                    'Quickshell.execDetached(["sh", "-c", GSettings.setCmd("org.gnome.desktop.interface", "color-scheme", targetScheme)]);' \
+                    'const schema = "org.gnome.desktop.interface";
+              const currentGtk = GSettings.getCmd(schema, "gtk-theme");
+              const adwTheme = isLightMode ? "adw-gtk3" : "adw-gtk3-dark";
+              const defaultTheme = isLightMode ? "Adwaita" : "Adwaita-dark";
+              const syncGtk = "current=$(" + currentGtk + "); case \"$current\" in adw-gtk3|adw-gtk3-dark) " + GSettings.setCmd(schema, "gtk-theme", adwTheme) + " ;; Adwaita|Adwaita-dark) " + GSettings.setCmd(schema, "gtk-theme", defaultTheme) + " ;; esac";
+              Quickshell.execDetached(["sh", "-c", GSettings.setCmd(schema, "color-scheme", targetScheme) + "; " + syncGtk]);' \
+                  --replace-fail \
+                    'Component.onCompleted: {' \
+                    'Component.onCompleted: {
+              if (typeof SettingsData !== "undefined" && SettingsData.syncModeWithPortal && typeof Theme !== "undefined")
+                  Qt.callLater(() => root.setSystemColorScheme(Theme.isLightMode));'
+
                 if [ -f "$out/share/quickshell/dms/Widgets/WorkspaceSwitcherModel.qml" ]; then
                   substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \
                     --replace-fail \
