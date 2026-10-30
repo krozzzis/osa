@@ -26,6 +26,8 @@
           };
         };
 
+        myconfig.always.osa.ai.codex.settings.check_for_update_on_startup = lib.mkDefault false;
+
         home.ifEnabled =
           {
             cfg,
@@ -66,7 +68,7 @@
             );
           in
           {
-            home.packages = lib.mapAttrsToList (_name: server: server.package) enabledLsp;
+            home.packages = [ pkgs.bubblewrap ] ++ lib.mapAttrsToList (_name: server: server.package) enabledLsp;
 
             # Codex writes project trust and other runtime state into config.toml.
             # Keep the file writable and merge OSA-owned settings during activation
