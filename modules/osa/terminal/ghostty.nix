@@ -22,6 +22,8 @@
             enable = true;
             package = cfg.pkg;
             settings = {
+              # Install Ghostty's terminfo on SSH hosts from interactive shells.
+              shell-integration-features = "ssh-terminfo";
               background-opacity = myconfig.osa.ui.transparency;
               # Match WezTerm's text_background_opacity = 1.0: cell backgrounds
               # stay opaque even while the window background is translucent.

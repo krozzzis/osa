@@ -1,6 +1,5 @@
 {
   delib,
-  lib,
   ...
 }:
 {
@@ -16,31 +15,10 @@
           osa.editor.zed.pkg = delib.packageOption pkgs.zed-editor;
         };
 
+        nixos.ifEnabled.programs.nix-ld.enable = true;
+
         home.ifEnabled =
-          { cfg, myconfig, ... }:
-          let
-            enabledServers = lib.filterAttrs (
-              _name: server: server.enable && server.package != null
-            ) myconfig.user.dev.lsp;
-
-            zedLspConfigs = {
-              "rust-analyzer" = {
-                check_on_save = true;
-                check.command = "clippy";
-              };
-              ruff = {
-                format = "on";
-                lint = "on";
-              };
-            };
-
-            lsp = builtins.listToAttrs (
-              map (name: {
-                inherit name;
-                value = zedLspConfigs.${name} or { };
-              }) (builtins.attrNames enabledServers)
-            );
-          in
+          { cfg, ... }:
           {
             home.packages = with pkgs; [
               nixfmt
@@ -53,14 +31,12 @@
               extensions = [
                 "nix"
                 "rust"
-                "python"
                 "toml"
               ];
 
               extraPackages = [
                 pkgs.nixfmt
-              ]
-              ++ lib.mapAttrsToList (_name: server: server.package) enabledServers;
+              ];
 
               userSettings = {
                 telemetry = {
@@ -73,31 +49,13 @@
                   show_branch_icon = false;
                 };
 
-                inherit lsp;
+                auto_install_extensions.html = true;
 
                 languages = {
-                  Rust = {
-                    language_servers = [ "rust-analyzer" ];
-                    formatter.external.command = "rustfmt";
-                  };
-                  Python = {
-                    language_servers = [
-                      "basedpyright"
-                      "ruff"
-                    ];
-                    formatter.external = {
-                      command = "ruff";
-                      arguments = [ "format" ];
-                    };
-                  };
                   Nix = {
-                    language_servers = [ "nixd" ];
                     formatter.external = {
                       command = "nixfmt";
                     };
-                  };
-                  TOML = {
-                    language_servers = [ "taplo" ];
                   };
                 };
               };

@@ -51,6 +51,7 @@ delib.host {
     osa.browser.chromium.enable = true;
     osa.browser.videoFullscreenZoom.enable = true;
     osa.dev.lsp.basedpyright.enable = true;
+    osa.dev.lsp.clangd.enable = true;
     osa.dev.lsp.jsonnet-ls.enable = true;
     osa.dev.lsp.lua-ls.enable = true;
     osa.dev.lsp.nixd.enable = true;
