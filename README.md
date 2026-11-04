@@ -302,7 +302,7 @@ Keep their channels aligned for compatible Qt plugins. OBS plugins and
 Nixvim's internal package set follow their application. Channel package sets inherit the host's nixpkgs configuration
 (including unfree policy), but not its overlays, preserving upstream cache
 identities. A `.nixpkgs` selector changes build dependencies; applications from
-separate flakes (Zen, DMS, DriftWM, etc.) retain their own pinned source
+separate flakes (Zen, DMS, etc.) retain their own pinned source
 versions. Upgrade those inputs separately to update their source versions.
 
 To support the system selector, downstream must call
@@ -340,7 +340,7 @@ Prefer release-channel packages for large applications and avoid arbitrary
 nixpkgs without a reason. Stable reduces churn, but cannot guarantee a cache
 hit. `cache.nixos.org` is the main binary cache; Cachix is only needed for
 projects with their own cache. Existing OSA patches to DMS/Niri and upstream
-Quickshell builds used by Caelestia can still require compilation. DMS uses the
+DMS uses the
 Quickshell release from unstable by default; an explicit `quickshell.pkg`
 override can select the git-flake build. Inspect a prospective update
 with `nix build --dry-run` before applying it; keep the previous lock file to
@@ -366,7 +366,7 @@ The project keys come from the pinned upstream Niri module, Walker README,
 Nixvim flake and WinApps README. OSA adds project caches with their public keys
 and preserves signature verification. Dependency flake `nixConfig` settings do
 not automatically configure the consuming system. No separate cache is
-advertised by the pinned DMS, Quickshell or DriftWM inputs; avoid guessing cache
+advertised by the pinned DMS or Quickshell inputs; avoid guessing cache
 URLs or adding unrelated caches. DMS's default Quickshell comes from nixpkgs.
 
 Inspect both configured lists (and their matching public-key lists):

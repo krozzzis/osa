@@ -26,9 +26,7 @@ delib.host {
     osa.editor.vim.pkg = myconfig.osa.nixpkgs.packages.system.vim;
 
     osa.de.rice.niri.enable = true;
-    osa.de.rice.caelestia.enable = true;
     osa.de.rice.xfce.enable = true;
-    osa.de.rice.driftwm.enable = true;
     osa.de.rice.primary = "niri";
 
     # Exercise opt-in branches that are not enabled by the desktop profile.

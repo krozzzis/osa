@@ -51,7 +51,6 @@ delib.module {
       # Multiple installed rice bundles must not start multiple shells.
       systemd.user.services.dms.Unit.ConditionEnvironment = [
         "|XDG_CURRENT_DESKTOP=niri"
-        "|XDG_CURRENT_DESKTOP=driftwm"
       ];
 
       # xdg-terminal-exec selects the first usable desktop entry from this
