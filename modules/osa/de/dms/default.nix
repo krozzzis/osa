@@ -59,13 +59,13 @@
                       'const baseList = CompositorService.workspacesForScreen' \
                       'let baseList = CompositorService.workspacesForScreen' \
                     --replace-fail \
-                      'if (CompositorService.ephemeralWorkspaces)' \
+                      'const slots = slotList(baseList);' \
                       'if (CompositorService.isNiri && SettingsData.workspaceNames.length > 0) {
                         const order = new Map(SettingsData.workspaceNames.map((name, index) => [name, index]));
                         baseList = baseList.filter(ws => order.has(ws.name));
                         baseList.sort((a, b) => order.get(a.name) - order.get(b.name));
                     }
-                    if (CompositorService.ephemeralWorkspaces)'
+                    const slots = slotList(baseList);'
                   polkitMessageProperty=supportingText
                 else
                   substituteInPlace $out/share/quickshell/dms/Common/SettingsData.qml \

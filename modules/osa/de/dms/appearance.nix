@@ -17,15 +17,14 @@ delib.module {
       matugenTemplateWezterm = true;
       matugenTemplateHyprland = false;
       matugenTemplateMangowc = false;
-      popupTransparency = myconfig.osa.ui.transparency;
+      popupTransparency = 1.0;
       frameOpacity = myconfig.osa.ui.transparency;
       dockTransparency = myconfig.osa.ui.transparency;
       desktopClockTransparency = myconfig.osa.ui.transparency;
       systemMonitorTransparency = myconfig.osa.ui.transparency;
-      foregroundLayerTransparency = myconfig.osa.ui.transparency;
+      foregroundLayerTransparency = 1.0;
       blurEnabled = myconfig.osa.ui.transparency < 1.0;
-      # Opaque cards over a translucent popup hide the background blur.
-      blurForegroundLayers = myconfig.osa.ui.transparency == 1.0;
+      blurForegroundLayers = false;
       fontFamily = myconfig.user.fonts.regular.name;
       monoFontFamily = myconfig.user.fonts.monospace.name;
       # Keep DMS's own resolver and the GTK session on the same icon theme.
@@ -33,6 +32,8 @@ delib.module {
       iconThemeLight = myconfig.user.ui.iconTheme.name;
       iconThemePerMode = false;
       workspaceNames = myconfig.user.ui.workspaces;
+      dankLauncherV2ShowFooter = false;
+      builtInPluginSettings.dms_clipboard_search.trigger = ":";
     };
   };
 }

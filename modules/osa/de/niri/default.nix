@@ -72,7 +72,12 @@ in
           osa.de.niri.launcher.default = lib.mkOption {
             type = lib.types.attrs;
             default = {
-              pkg = myconfig.osa.apps.walker.pkg;
+              pkg = pkgs.writeShellApplication {
+                name = "dms-launcher";
+                text = ''
+                  exec ${lib.getExe myconfig.osa.de.dms.pkg} ipc call spotlight toggle
+                '';
+              };
             };
           };
         };

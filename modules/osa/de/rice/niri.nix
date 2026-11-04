@@ -8,7 +8,6 @@ delib.module {
     osa = {
       de.niri.enable = true;
       de.dms.enable = true;
-      apps.walker.enable = true;
       fileManager.udiskie.enable = true;
     };
   };

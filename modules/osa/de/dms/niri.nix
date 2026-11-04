@@ -19,26 +19,6 @@ delib.module {
             "0"
           ];
         };
-        "Mod+Shift+P" = {
-          hotkey-overlay.title = "Toggle Spotlight";
-          action.spawn = [
-            "dms"
-            "ipc"
-            "call"
-            "spotlight"
-            "toggle"
-          ];
-        };
-        "Super+Shift+P" = {
-          hotkey-overlay.title = "Toggle Spotlight";
-          action.spawn = [
-            "dms"
-            "ipc"
-            "call"
-            "spotlight"
-            "toggle"
-          ];
-        };
       };
     };
 }
