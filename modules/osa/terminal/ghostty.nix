@@ -12,7 +12,7 @@
           osa.terminal.ghostty.pkg = delib.packageOption (
             pkgs.ghostty.overrideAttrs (old: {
               # Preserve UTF-8 notifications and allow Y/N in GTK close dialogs.
-              patches = (old.patches or [ ]) ++ [ ./ghostty-notification-utf8.patch ];
+              patches = old.patches or [ ];
             })
           );
         };

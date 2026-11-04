@@ -6,7 +6,13 @@ delib.module {
     programs.niri.settings = {
       input = {
         keyboard.xkb = {
-          inherit (myconfig.user.input.keyboard) layout options;
+          inherit (myconfig.user.input.keyboard) layout;
+
+          options = builtins.concatStringsSep ","
+            (builtins.filter (s: s != "") [
+              (myconfig.user.input.keyboard.options or "")
+              "compose:ralt"
+            ]);
         };
 
         touchpad = {

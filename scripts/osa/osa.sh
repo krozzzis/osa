@@ -20,8 +20,8 @@ Usage: $program <command> [--config PATH] <configuration> [-- EXTRA_ARGS...]
        $program clean
 
 Commands:
-  update           Regenerate flake.nix and update flake.lock
-  update-osa       Regenerate flake.nix and update only the osa input
+  update           Update flake.lock
+  update-osa       Update only the osa input in flake.lock
   update-switch    Update, then activate the configuration now
   update-boot      Update, then activate the configuration on next boot
   switch           Build and activate the configuration now
@@ -95,11 +95,6 @@ run_nh() {
     NH_OSA_CONFIG="$config_dir" nh "$@"
 }
 
-write_flake() {
-  echo "==> Regenerating $config_dir/flake.nix" >&2
-  run_in_config nix run .#write-flake
-}
-
 update_flake() {
   local -a update_args=("${extra_args[@]}")
 
@@ -107,16 +102,12 @@ update_flake() {
     update_args=(osa "${update_args[@]}")
   fi
 
-  # Refresh the generated input declarations before updating the lock file.
-  # Regenerate again afterwards because updated inputs can change flake-file output.
-  write_flake
   if [[ ${1-} == osa ]]; then
     echo "==> Updating the osa flake input in $config_dir" >&2
   else
     echo "==> Updating flake inputs in $config_dir" >&2
   fi
   run_in_config nix flake update "${update_args[@]}"
-  write_flake
 }
 
 clean_system() {
@@ -137,8 +128,6 @@ rebuild() {
   [[ $dry == true ]] && action=build
   if [[ $update == true ]]; then
     update_flake
-  else
-    write_flake
   fi
   if ((EUID == 0)); then
     # Build and compare as the owner. NH's root phase consumes the completed
@@ -165,7 +154,6 @@ build_system_image() {
   local prefix="nixosConfigurations.$configuration.config.system.build"
   local image_attr
 
-  write_flake
   for image_attr in sdImage isoImage; do
     if flake_has_attr "$prefix.$image_attr"; then
       echo "==> Building $image_attr for $configuration" >&2
@@ -178,7 +166,6 @@ build_system_image() {
 }
 
 build_installer() {
-  write_flake
   echo "==> Building installer for $configuration" >&2
   build_image installer
 }

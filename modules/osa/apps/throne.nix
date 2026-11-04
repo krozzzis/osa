@@ -15,17 +15,17 @@
           nixpkgs:
           if
             lib.hasInfix "/share/throne/ThroneCore" (
-              builtins.readFile "${nixpkgs}/nixos/modules/programs/throne.nix"
+              builtins.readFile (nixpkgs + "/nixos/modules/programs/throne.nix")
             )
           then
             "ThroneCore"
           else
             "Core";
         wrapperNameFor = core: if core == "Core" then "throne-core" else core;
-        hostWrapper = wrapperNameFor (coreNameFor inputs.nixpkgs);
+        hostWrapper = wrapperNameFor (coreNameFor inputs.nixpkgs.outPath);
         needsResolvedRevert =
           !lib.hasInfix "\"org.freedesktop.resolve1.revert\"" (
-            builtins.readFile "${inputs.nixpkgs}/nixos/modules/programs/throne.nix"
+            builtins.readFile (inputs.nixpkgs.outPath + "/nixos/modules/programs/throne.nix")
           );
       in
       delib.module {

@@ -34,8 +34,8 @@ function __osa_configuration_names
 end
 
 complete -c osa -f
-complete -c osa -n 'not __osa_seen_command' -a update -d 'Regenerate flake.nix and update flake.lock'
-complete -c osa -n 'not __osa_seen_command' -a update-osa -d 'Regenerate flake.nix and update only the osa input'
+complete -c osa -n 'not __osa_seen_command' -a update -d 'Update flake.lock'
+complete -c osa -n 'not __osa_seen_command' -a update-osa -d 'Update only the osa input in flake.lock'
 complete -c osa -n 'not __osa_seen_command' -a update-switch -d 'Update and activate the configuration now'
 complete -c osa -n 'not __osa_seen_command' -a update-boot -d 'Update and activate the configuration on next boot'
 complete -c osa -n 'not __osa_seen_command' -a switch -d 'Build and activate the configuration now'

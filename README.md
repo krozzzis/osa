@@ -34,21 +34,8 @@ Modules are grouped by category under `modules/osa/`:
 | `terminal/`    | wezterm                                      |
 
 Every module is a `delib.module` (see denix), namespaced as
-`myconfig.osa.<category>.<name>`. A module that needs its own flake input
-declares it in a sibling `inputs.nix` (e.g.
-`modules/osa/de/dms/inputs.nix`) rather than in the root flake — see
-`lib/flake-inputs.nix`, which scans for these and feeds them into
-`flake-file.nix`.
-
-`flake.nix` is generated from `flake-file.nix` via
-[flake-file](https://github.com/vic/flake-file) — never edit it by hand.
-After touching `flake-file.nix` or any `inputs.nix`, run:
-
-```bash
-nix run .#write-flake
-```
-
-`nix flake check` fails if `flake.nix` is out of sync.
+`myconfig.osa.<category>.<name>`. Flake inputs are declared directly in
+`flake.nix` and their exact versions are pinned in `flake.lock`.
 
 WezTerm notifications use normal urgency and the notification server's default
 timeout. A downstream flake such as `osa-user` can restore WezTerm's original
@@ -58,7 +45,7 @@ behavior by setting `myconfig.osa.terminal.wezterm.notifications.autoExpire = fa
 
 The `osa.system.osa-cli` module is enabled by default and installs the `osa`
 command. It operates on a downstream configuration flake (by default
-`~/osa-user`) and regenerates its `flake.nix` when required:
+`~/osa-user`):
 
 ```bash
 osa update
@@ -115,13 +102,10 @@ A minimal composition using OSA's pinned module inputs:
     nixpkgs.follows = "nixpkgs-stable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    home-manager = {
-      url = "github:nix-community/home-manager/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    home-manager.url = "github:nix-community/home-manager/master";
     denix = {
       url = "github:yunfachi/denix";
-      inputs = { nixpkgs.follows = "nixpkgs"; home-manager.follows = "home-manager"; };
+      inputs.home-manager.follows = "home-manager";
     };
     osa.url = "github:krozzzis/osa";
   };
@@ -130,7 +114,6 @@ A minimal composition using OSA's pinned module inputs:
     let
       moduleInputs = osa.inputs // inputs;
       paths = [ ./hosts "${osa}/modules" ];
-      scanner = import "${osa}/lib/flake-inputs.nix" { lib = inputs.nixpkgs.lib; };
     in {
       nixosConfigurations = (import "${osa}/lib/configurations.nix" {
         inputs = moduleInputs;
@@ -138,7 +121,6 @@ A minimal composition using OSA's pinned module inputs:
         moduleSystem = "nixos";
         homeManagerUser = "<your-username>";
         inherit paths;
-        exclude = scanner.findPaths paths;
         extensions = with denix.lib.extensions; [
           args
           (base.withConfig { args.enable = true; })
@@ -149,8 +131,9 @@ A minimal composition using OSA's pinned module inputs:
 }
 ```
 
-For module inputs declared in your own configuration, use the `flake-file`
-scanner workflow below, as `osa-user` does.
+Declare additional dependencies directly in your own `flake.nix`. External
+flakes retain their own pinned nixpkgs; OSA application modules may instead
+explicitly build packages from their selected channel.
 
 From there, a host under `./hosts/<name>/default.nix` turns modules on
 via `myconfig.osa.<category>.<name>.enable = true;`.
@@ -208,24 +191,15 @@ selects a single authoritative `material` package.
 
 ### Module flake inputs
 
-Some modules need their own flake inputs (niri, DMS, walker, nixvim, ...);
-each declares them in a sibling `inputs.nix` inside `${osa}/modules`. Your
-flake should collect those too, using the same scanner osa itself uses
-(`lib/flake-inputs.nix`) — see how
-[osa-krozzzis](https://github.com/krozzzis/osa-krozzzis) does it: filter each
-input root once (dropping `inputs.nix` files so denix
-never imports them), then pass every collected input through to denix via
-`specialArgs.inputs`.
+OSA declares its dependencies in the root `flake.nix`. Downstream flakes can
+use `osa.inputs // inputs` to pass those defaults along with their own
+inputs through `specialArgs.inputs`. Declare an input or an `osa.inputs` follow
+in the downstream flake when its version or nixpkgs source must be controlled
+there. Keep stable and unstable sources separate; do not collapse the system
+and application channels.
 
 See [osa-krozzzis](https://github.com/krozzzis/osa-krozzzis) for a real
-identity/rice/host layer built this way, and its README for how to extend it
-with additional user modules and hosts, or `AGENTS.md` in this repo
-for the full module-authoring reference (how `delib.module`,
-`nixos.ifEnabled`/`home.ifEnabled`, and cross-module options work).
-
-Within osa itself, each module's `inputs.nix` is picked up automatically by
-`lib/flake-inputs.nix`; downstream flakes need to run the same scan over
-`${osa}/modules` (see the previous section) for those inputs to reach them.
+identity/rice/host layer and `AGENTS.md` for the module-authoring reference.
 
 ### Default GUI applications
 
@@ -293,13 +267,13 @@ available at `http://127.0.0.1:8006` while the VM is running.
 
 OSA declares `nixpkgs-stable` (currently `nixos-26.05`) and
 `nixpkgs-unstable` (`nixos-unstable`). Both are pinned by `flake.lock`.
-Set their URLs in `flake-file.nix` / `inputs.nix` to change release versions,
-then run `nix run .#write-flake` and update the corresponding lock entry.
+Set their URLs in `flake.nix` to change release versions, then update the
+corresponding lock entry.
 26.11 is not a stable release yet as of September 2026. Additional inputs named
 `nixpkgs-<channel>` automatically become available to all selectors. For example,
-`flake-file.inputs.nixpkgs-2605.url = "github:nixos/nixpkgs/nixos-26.05"`
+`inputs.nixpkgs-2605.url = "github:nixos/nixpkgs/nixos-26.05"`
 adds `osa.apps.rustdesk.nixpkgs = "2605"`. The `system` name is reserved.
-OSA's stable/unstable input URLs are defaults that downstream can override.
+Downstream flakes can override OSA's inputs using `follows`.
 
 In downstream denix configuration:
 

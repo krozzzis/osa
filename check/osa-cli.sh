@@ -40,7 +40,7 @@ for action in update update-osa; do
   actual=$(<"$OSA_TEST_LOG")
   input=
   [[ $action != update-osa ]] || input='osa '
-  [[ $actual == "nix run .#write-flake"$'\n'"nix flake update ${input}--refresh"$'\n'"nix run .#write-flake" ]]
+  [[ $actual == "nix flake update ${input}--refresh" ]]
 done
 for action in switch boot test build update-switch update-boot; do
   : >"$OSA_TEST_LOG"
@@ -48,6 +48,12 @@ for action in switch boot test build update-switch update-boot; do
   actual=$(<"$OSA_TEST_LOG")
   [[ $actual == *"nh os ${action#update-} $work_dir/config --hostname test/host name --out-link $work_dir/config/result --diff always"* ]]
   [[ $actual == *"--elevation-strategy $work_dir/bin/osa-elevate -- --show-trace"* ]]
+  [[ $actual != *"nix run .#write-flake"* ]]
+  if [[ $action == update-* ]]; then
+    [[ $actual == *"nix flake update"* ]]
+  else
+    [[ $actual != *"nix flake update"* ]]
+  fi
 done
 : >"$OSA_TEST_LOG"
 bash "$osa_script" os switch --dry --no-nom --no-diff --config "$work_dir/config" host

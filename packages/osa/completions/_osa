@@ -37,8 +37,8 @@ _osa() {
   case $state in
     command)
       local -a commands=(
-        'update:regenerate flake.nix and update flake.lock'
-        'update-osa:regenerate flake.nix and update only the osa input'
+        'update:update flake.lock'
+        'update-osa:update only the osa input in flake.lock'
         'update-switch:update and activate the configuration now'
         'update-boot:update and activate the configuration on next boot'
         'switch:build and activate the configuration now'
