@@ -29,7 +29,6 @@ Commands:
   test             Build and activate without adding a boot generation
   build            Build the system without activating it
   build-iso        Build a bootable ready-to-run image (sdImage or isoImage)
-  build-installer  Build the <configuration>-installer package
   clean            Delete old Home Manager and Nix generations, then run GC
 
 Options:
@@ -47,7 +46,6 @@ Examples:
   $program update --config ~/osa-user
   $program update-osa
   $program clean
-  $program build-installer eeepc-xfce
 EOF
 }
 
@@ -165,26 +163,14 @@ build_system_image() {
   die "configuration '$configuration' exports neither system.build.sdImage nor system.build.isoImage"
 }
 
-build_installer() {
-  echo "==> Building installer for $configuration" >&2
-  build_image installer
-}
-
 build_image() {
   local variant=$1 expression
   local -a nh_args=(--diff never --no-specialisation --out-link "$config_dir/result" --impure)
   [[ $no_nom == true ]] && nh_args+=(--no-nom)
-  # NH's image command expects config.system.build.images; OSA also supports
-  # legacy sdImage/isoImage and standalone installer packages. Adapt their
-  # derivations to NH's build input without injecting paths into Nix source.
-  if [[ $variant == installer ]]; then
-    # Nix interpolation, deliberately not shell interpolation.
-    # shellcheck disable=SC2016
-    expression='{ config.system.build.toplevel = (builtins.getFlake (builtins.getEnv "NH_OSA_CONFIG")).packages.${builtins.currentSystem}.${(builtins.getEnv "NH_OSA_HOST") + "-installer"}; }'
-  else
-    # shellcheck disable=SC2016
-    expression='{ config.system.build.toplevel = (builtins.getFlake (builtins.getEnv "NH_OSA_CONFIG")).nixosConfigurations.${builtins.getEnv "NH_OSA_HOST"}.config.system.build.${builtins.getEnv "NH_OSA_IMAGE"}; }'
-  fi
+  # NH's image command expects config.system.build.images; adapt legacy
+  # sdImage/isoImage derivations to its build input.
+  # shellcheck disable=SC2016
+  expression='{ config.system.build.toplevel = (builtins.getFlake (builtins.getEnv "NH_OSA_CONFIG")).nixosConfigurations.${builtins.getEnv "NH_OSA_HOST"}.config.system.build.${builtins.getEnv "NH_OSA_IMAGE"}; }'
   run_in_config env NH_OSA_CONFIG="$config_dir" NH_OSA_HOST="$configuration" \
     NH_OSA_IMAGE="$variant" nh os build --expr "$expression" "${nh_args[@]}" \
     -- "${extra_args[@]}"
@@ -305,10 +291,6 @@ case $command in
   build-iso)
     [[ -n $configuration ]] || die "$command requires a configuration name"
     build_system_image
-    ;;
-  build-installer)
-    [[ -n $configuration ]] || die "$command requires a configuration name"
-    build_installer
     ;;
   clean)
     [[ -z $configuration ]] || die "the clean command does not take a configuration name"

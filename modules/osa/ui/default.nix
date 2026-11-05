@@ -97,57 +97,59 @@ delib.module {
 
   home.always =
     { myconfig, ... }:
-    lib.mkMerge [
-      {
-        home.sessionVariables.J2D_UISCALE = toString myconfig.osa.ui.scale;
-      }
-      (lib.mkIf myconfig.user.gui.enable {
-        gtk = {
-          enable = true;
-          font = {
-            name = myconfig.user.fonts.regular.name;
-            size = myconfig.user.ui.fontSize;
+    {
+      config = lib.mkMerge [
+        {
+          home.sessionVariables.J2D_UISCALE = toString myconfig.osa.ui.scale;
+        }
+        (lib.mkIf myconfig.user.gui.enable {
+          gtk = {
+            enable = true;
+            font = {
+              name = myconfig.user.fonts.regular.name;
+              size = myconfig.user.ui.fontSize;
+            };
+            iconTheme = {
+              package = myconfig.user.ui.iconTheme.pkg;
+              name = myconfig.user.ui.iconTheme.name;
+            };
           };
-          iconTheme = {
-            package = myconfig.user.ui.iconTheme.pkg;
-            name = myconfig.user.ui.iconTheme.name;
+
+          qt = {
+            enable = true;
+            # Keep this aligned with osa.de.niri: KDE reads the font declarations
+            # below from kdeglobals, while qtct would ignore them and use its own
+            # default font size.
+            platformTheme.name = "kde";
           };
-        };
 
-        qt = {
-          enable = true;
-          # Keep this aligned with osa.de.niri: KDE reads the font declarations
-          # below from kdeglobals, while qtct would ignore them and use its own
-          # default font size.
-          platformTheme.name = "kde";
-        };
+          # Niri uses the KDE platform theme for Qt applications.
+          xdg.configFile."kdeglobals".text =
+            let
+              size = toString myconfig.user.ui.fontSize;
+              font = "${myconfig.user.fonts.regular.name},${size},-1,5,50,0,0,0,0,0";
+              fixedFont = "${myconfig.user.fonts.monospace.name},${size},-1,5,50,0,0,0,0,0";
+            in
+            ''
+              [General]
+              fixed=${fixedFont}
+              font=${font}
+              menuFont=${font}
+              smallestReadableFont=${font}
+              toolBarFont=${font}
 
-        # Niri uses the KDE platform theme for Qt applications.
-        xdg.configFile."kdeglobals".text =
-          let
-            size = toString myconfig.user.ui.fontSize;
-            font = "${myconfig.user.fonts.regular.name},${size},-1,5,50,0,0,0,0,0";
-            fixedFont = "${myconfig.user.fonts.monospace.name},${size},-1,5,50,0,0,0,0,0";
-          in
-          ''
-            [General]
-            fixed=${fixedFont}
-            font=${font}
-            menuFont=${font}
-            smallestReadableFont=${font}
-            toolBarFont=${font}
+              [Icons]
+              Theme=${myconfig.user.ui.iconTheme.name}
 
-            [Icons]
-            Theme=${myconfig.user.ui.iconTheme.name}
+              [WM]
+              activeFont=${font}
+            '';
 
-            [WM]
-            activeFont=${font}
-          '';
-
-        home.packages = [
-          myconfig.user.fonts.regular.pkg
-          myconfig.user.fonts.monospace.pkg
-        ];
-      })
-    ];
+          home.packages = [
+            myconfig.user.fonts.regular.pkg
+            myconfig.user.fonts.monospace.pkg
+          ];
+        })
+      ];
+    };
 }

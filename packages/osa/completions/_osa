@@ -46,7 +46,6 @@ _osa() {
         'test:activate without adding a boot generation'
         'build:build the system without activation'
         'build-iso:build a bootable system image'
-        'build-installer:build an installer package'
         'clean:delete old Home Manager and Nix generations, then run GC'
         'help:show help'
       )

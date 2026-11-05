@@ -67,7 +67,7 @@ if OSA_TEST_FAIL=1 bash "$osa_script" switch --config "$work_dir/config" host; t
   echo 'OSA ignored NH failure' >&2
   exit 1
 fi
-for action in build-iso build-installer; do
+for action in build-iso; do
   : >"$OSA_TEST_LOG"
   bash "$osa_script" "$action" --config "$work_dir/config" host
   actual=$(<"$OSA_TEST_LOG")

@@ -3,6 +3,7 @@
   lib,
   inputs,
   pkgs,
+  osaModuleSystem ? "nixos",
   ...
 }:
 let
@@ -83,6 +84,9 @@ in
         };
 
         nixos.always.imports = [ inputs.niri-pkgs.nixosModules.niri ];
+
+        # Integrated HM receives this module from the NixOS Niri module.
+        home.always.imports = lib.optional (osaModuleSystem == "home") inputs.niri-pkgs.homeModules.config;
 
         nixos.ifEnabled = { cfg, ... }: {
           programs.niri.enable = true;

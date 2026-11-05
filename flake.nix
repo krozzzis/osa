@@ -24,8 +24,8 @@
         );
         modules-eval =
           let
-            evaluatedHost =
-              channel:
+            evaluatedConfiguration =
+              moduleSystem: channel:
               (
                 (import ./lib/configurations.nix {
                   inputs = inputs // {
@@ -33,7 +33,7 @@
                   };
                 })
                   {
-                    moduleSystem = "nixos";
+                    inherit moduleSystem;
                     homeManagerUser = "nixos";
                     paths = [
                       ./modules
@@ -51,10 +51,17 @@
                       }
                     ];
                   }
-              ).eval-check.config.system.build.toplevel.drvPath;
+              ).${if moduleSystem == "home" then "nixos@eval-check" else "eval-check"};
+            evaluatedHost =
+              channel: (evaluatedConfiguration "nixos" channel).config.system.build.toplevel.drvPath;
+            evaluatedHome = channel: (evaluatedConfiguration "home" channel).activationPackage.drvPath;
           in
           pkgs.runCommand "osa-modules-eval" { } (
             assert lib.all (channel: builtins.isString (evaluatedHost channel)) [
+              "stable"
+              "unstable"
+            ];
+            assert lib.all (channel: builtins.isString (evaluatedHome channel)) [
               "stable"
               "unstable"
             ];

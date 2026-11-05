@@ -9,6 +9,7 @@
 { delib, inputs, ... }:
 delib.host {
   name = "eval-check";
+  homeManagerSystem = "x86_64-linux";
 
   myconfig = { myconfig, ... }: {
     user.constants.username = "nixos";
@@ -76,6 +77,8 @@ delib.host {
   };
 
   home.home.stateVersion = "26.05";
+  home.home.username = "nixos";
+  home.home.homeDirectory = "/home/nixos";
 
   # Minimal stand-in for what a real host's hardware/disko/boot modules
   # provide -- just enough plumbing for toplevel eval to pass assertions.

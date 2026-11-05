@@ -30,7 +30,7 @@ _osa() {
 
   for word in "${COMP_WORDS[@]:1}"; do
     case $word in
-      update|update-osa|update-switch|update-boot|switch|boot|test|build|build-iso|build-installer|clean|help)
+      update|update-osa|update-switch|update-boot|switch|boot|test|build|clean|help)
         command=$word
         break
         ;;
@@ -38,7 +38,7 @@ _osa() {
   done
 
   if [[ -z $command ]]; then
-    COMPREPLY=($(compgen -W 'update update-osa update-switch update-boot switch boot test build build-iso build-installer clean help' -- "$cur"))
+    COMPREPLY=($(compgen -W 'update update-osa update-switch update-boot switch boot test build clean help' -- "$cur"))
   elif [[ $cur == -* ]]; then
     COMPREPLY=($(compgen -W '-c --config -u --update -a --ask -n --dry --no-nom --no-diff -h --help --' -- "$cur"))
   elif [[ $command != update && $command != update-osa && $command != clean && $command != help ]]; then

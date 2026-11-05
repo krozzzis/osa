@@ -28,6 +28,7 @@ let
         inherit nixpkgs home-manager;
         homeManagerNixpkgs = nixpkgs;
         specialArgs = (args.specialArgs or { }) // {
+          osaModuleSystem = args.moduleSystem;
           inputs = inputs // {
             inherit nixpkgs home-manager;
           };

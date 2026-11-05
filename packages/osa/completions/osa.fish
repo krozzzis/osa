@@ -1,5 +1,5 @@
 function __osa_seen_command
-    set -l commands update update-osa update-switch update-boot switch boot test build build-iso build-installer clean help
+    set -l commands update update-osa update-switch update-boot switch boot test build clean help
     for word in (commandline -opc)
         contains -- $word $commands; and return 0
     end
@@ -8,7 +8,7 @@ end
 
 function __osa_needs_configuration
     set -l words (commandline -opc)
-    for command in update-switch update-boot switch boot test build build-iso build-installer
+    for command in update-switch update-boot switch boot test build
         contains -- $command $words; and return 0
     end
     return 1
@@ -40,8 +40,6 @@ complete -c osa -n 'not __osa_seen_command' -a update-switch -d 'Update and acti
 complete -c osa -n 'not __osa_seen_command' -a update-boot -d 'Update and activate the configuration on next boot'
 complete -c osa -n 'not __osa_seen_command' -a switch -d 'Build and activate the configuration now'
 complete -c osa -n 'not __osa_seen_command' -a boot -d 'Build and activate the configuration on next boot'
-complete -c osa -n 'not __osa_seen_command' -a build-iso -d 'Build a bootable system image'
-complete -c osa -n 'not __osa_seen_command' -a build-installer -d 'Build an installer package'
 complete -c osa -n 'not __osa_seen_command' -a clean -d 'Delete old Home Manager and Nix generations, then run GC'
 complete -c osa -n 'not __osa_seen_command' -a help -d 'Show help'
 complete -c osa -s c -l config -r -a '(__fish_complete_directories)' -d 'Configuration flake'

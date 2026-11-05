@@ -138,6 +138,39 @@ explicitly build packages from their selected channel.
 From there, a host under `./hosts/<name>/default.nix` turns modules on
 via `myconfig.osa.<category>.<name>.enable = true;`.
 
+### Applying user configuration independently
+
+Denix can export both `nixosConfigurations` and standalone `homeConfigurations`
+from the same feature modules. Build the latter to change user settings without
+building a NixOS generation. In an `osa-user` composition, for example:
+
+```bash
+cd ~/osa-user
+nix build '.#homeConfigurations."krozzzis@nixlaptop-niri".activationPackage' \
+  --override-input osa ~/osa --no-write-lock-file --out-link result-home
+./result-home/activate
+```
+
+Run activation as the session user. The local input override is needed while
+testing unpublished OSA changes; omit it after updating the downstream OSA pin.
+This evaluates the complete Home Manager configuration, not only the changed
+cosmetic option, and may build user packages. It does not guarantee subsecond
+application. Updating running applications depends on their reload support.
+
+For a permanent standalone setup, set `useHomeManagerModule = false` in the
+relevant `delib.host` declaration and apply that NixOS change once, then activate
+the standalone home configuration. This transfers ownership away from the
+NixOS-managed Home Manager activation service. Keep username, home directory,
+state version, package channel and rice aligned with the same host. The current
+builder selects the matching Home Manager release independently for each output.
+
+Cosmetic values such as `user.ui.transparency`, `user.ui.gap`,
+`user.ui.cornerRadius` and `user.ui.fontSize` belong downstream in `myconfig`
+assignments. OSA maps them to DMS, compositor and application settings. Some
+values also have system effects: OSA installs fonts and sets system font defaults,
+and exports the Java UI scale system-wide. Standalone activation updates only
+their Home Manager effects; system effects require a system switch.
+
 ### Required `user.*` contract
 
 All osa modules read their user-facing knobs from the `user.*` option tree,
