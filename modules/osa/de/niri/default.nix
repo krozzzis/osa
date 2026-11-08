@@ -149,6 +149,9 @@ in
 
         home.ifEnabled = { cfg, ... }: {
           programs.niri.package = cfg.pkg;
+          # Shortcuts invoke the launcher by its executable name. Make the
+          # selected launcher package available in the session PATH.
+          home.packages = [ cfg.launcher.default.pkg ];
         };
 
       }

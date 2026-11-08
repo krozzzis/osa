@@ -19,6 +19,7 @@
                   raw_lines: &[
           ${pkgs.lib.concatMapStringsSep "\n" (line: "            ${builtins.toJSON (pkgs.lib.removePrefix "$1" line)},") logoLines}
                   ],
+          ${pkgs.lib.optionalString (pkgs.lib.hasInfix "pub compact_lines:" (builtins.readFile "${inputs.kkfetch}/src/output/logo.rs")) "        compact_lines: None,"}
                   distro_color: "\x1b[33m",
                   outer_color: WHITE_COLOR,
               },
