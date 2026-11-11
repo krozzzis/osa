@@ -14,6 +14,7 @@
       });
 
       checks.${system} = {
+        oo7-pam = import ./lib/checks/oo7-pam.nix { inherit inputs system; };
         fish-completions = import ./lib/checks/fish-completions.nix { inherit inputs system; };
         osa-cli = pkgs.runCommand "osa-cli-tests" { nativeBuildInputs = [ pkgs.bash ]; } (
           builtins.concatStringsSep "\n" [

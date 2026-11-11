@@ -1,0 +1,134 @@
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -177,6 +177,20 @@
+             let _ = Box::from_raw(password_ptr as *mut Zeroizing<Vec<u8>>);
+         }
+         return PAM_AUTHTOK_RECOVER_ERR;
++    }
++
++    // Lock screens authenticate without opening a new PAM session.
++    let unlock_now = (0.._argc).any(|i| {
++        let arg = unsafe { *_argv.offset(i as isize) };
++        !arg.is_null() && unsafe { CStr::from_ptr(arg) }.to_bytes() == b"unlock"
++    });
++    if unlock_now {
++        if let Some((uid, gid)) = get_user_credentials(&username) {
++            let message = PamMessage::unlock(username.clone(), password.to_vec());
++            if let Err(error) = send_secret_to_daemon(message, uid, gid, false) {
++                tracing::debug!("Keyring not available during authentication: {error}");
++            }
++        }
+     }
+
+     tracing::info!("Stashed password to try later in open session");
+@@ -277,7 +291,7 @@
+     let message = PamMessage::unlock(username.clone(), password.to_vec());
+
+     // Send the secret to the oo7 daemon
+-    std::thread::spawn(move || {
++    {
+         match send_secret_to_daemon(message, user_uid, user_gid, auto_start) {
+             Ok(_) => {
+                 tracing::info!(
+@@ -289,7 +303,7 @@
+                 tracing::error!("Failed to send secret to oo7 daemon: {}", e);
+             }
+         }
+-    });
++    }
+
+     PAM_SUCCESS
+ }
+@@ -384,7 +398,7 @@
+             new_password.to_vec(),
+         );
+
+-        std::thread::spawn(move || {
++        {
+             match send_secret_to_daemon(message, user_uid, user_gid, false) {
+                 Ok(_) => {
+                     tracing::info!(
+@@ -396,7 +410,7 @@
+                     tracing::error!("Failed to send password change to oo7 daemon: {}", e);
+                 }
+             }
+-        });
++        }
+
+         return PAM_SUCCESS;
+     }
+--- a/src/socket.rs
++++ b/src/socket.rs
+@@ -34,6 +34,34 @@
+             Self::Connect(e) | Self::Send(e) => Some(e),
+             Self::Serialize(e) => Some(e),
+             Self::Timeout => None,
++        }
++    }
++}
++
++// Login managers can ignore SIGCHLD and SIGPIPE. Preserve their handlers while
++// waiting for our credential-switch child, and avoid terminating on a closed socket.
++struct SavedSignals {
++    sigpipe: libc::sigaction,
++    sigchld: libc::sigaction,
++}
++impl SavedSignals {
++    fn new() -> Self {
++        unsafe {
++            let mut saved: Self = std::mem::zeroed();
++            let mut action: libc::sigaction = std::mem::zeroed();
++            action.sa_sigaction = libc::SIG_IGN;
++            libc::sigaction(libc::SIGPIPE, &action, &mut saved.sigpipe);
++            action.sa_sigaction = libc::SIG_DFL;
++            libc::sigaction(libc::SIGCHLD, &action, &mut saved.sigchld);
++            saved
++        }
++    }
++}
++impl Drop for SavedSignals {
++    fn drop(&mut self) {
++        unsafe {
++            libc::sigaction(libc::SIGPIPE, &self.sigpipe, std::ptr::null_mut());
++            libc::sigaction(libc::SIGCHLD, &self.sigchld, std::ptr::null_mut());
+         }
+     }
+ }
+@@ -62,6 +90,7 @@
+         "Running as different user (current UID={current_uid}, target UID={uid}), forking to switch credentials"
+     );
+
++    let _saved_signals = SavedSignals::new();
+     match unsafe { libc::fork() } {
+         -1 => {
+             tracing::error!("Failed to fork process for credential switch");
+@@ -69,7 +98,8 @@
+         }
+         0 => {
+             unsafe {
+-                if libc::setgid(gid) < 0
++                if (current_euid == 0 && libc::setgroups(0, std::ptr::null()) < 0)
++                    || libc::setgid(gid) < 0
+                     || libc::setuid(uid) < 0
+                     || libc::setegid(gid) < 0
+                     || libc::seteuid(uid) < 0
+@@ -158,6 +188,19 @@
+             // Child process - exec oo7-daemon
+             // Close stdin, stdout, stderr and reopen to /dev/null
+             unsafe {
++                // PAM inherits the greeter's environment, not the login user's.
++                let uid = libc::getuid();
++                let account = libc::getpwuid(uid);
++                if !account.is_null() {
++                    libc::setenv(c"HOME".as_ptr(), (*account).pw_dir, 1);
++                }
++                let runtime = std::ffi::CString::new(format!("/run/user/{uid}")).unwrap();
++                let bus = std::ffi::CString::new(format!("unix:path=/run/user/{uid}/bus")).unwrap();
++                libc::setenv(c"XDG_RUNTIME_DIR".as_ptr(), runtime.as_ptr(), 1);
++                libc::setenv(c"DBUS_SESSION_BUS_ADDRESS".as_ptr(), bus.as_ptr(), 1);
++                libc::setsid();
++                libc::signal(libc::SIGHUP, libc::SIG_IGN);
++
+                 let dev_null = libc::open(c"/dev/null".as_ptr(), libc::O_RDWR);
+                 if dev_null >= 0 {
+                     libc::dup2(dev_null, 0);

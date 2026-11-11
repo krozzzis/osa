@@ -11,11 +11,35 @@ delib.module {
     osa.system.oo7.enable = delib.boolOption myconfig.user.gui.enable;
   };
 
-  nixos.always.imports =
-    lib.optionals (inputs.nixpkgs.lib.versionOlder inputs.nixpkgs.lib.version "26.11")
-      [ ../../../lib/compat/oo7.nix ];
+  nixos.always.imports = [
+    ../../../lib/compat/oo7-pam-rules.nix
+  ]
+  ++ lib.optionals (inputs.nixpkgs.lib.versionOlder inputs.nixpkgs.lib.version "26.11") [
+    ../../../lib/compat/oo7.nix
+  ];
 
   nixos.ifEnabled = {
+    nixpkgs.overlays = [
+      (_: prev: {
+        oo7-pam = import ../../../lib/compat/oo7-pam.nix {
+          pkgs = prev;
+          inherit inputs;
+        };
+      })
+    ];
+
+    # Password changes must update the keyring too. Lockers that use login or
+    # swaylock only authenticate, without opening another PAM session.
+    security.pam.services.login = {
+      oo7.enable = true;
+      rules.auth.oo7.settings.unlock = true;
+    };
+    security.pam.services.passwd.oo7.enable = true;
+    security.pam.services.swaylock = {
+      oo7.enable = true;
+      rules.auth.oo7.settings.unlock = true;
+    };
+
     # greetd authenticates DMS sessions. Stable NixOS has its own PAM stack;
     # newer NixOS includes login's stack, which already enables oo7.
     security.pam.services.greetd.oo7.enable = true;

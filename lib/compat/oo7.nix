@@ -8,18 +8,10 @@
   inputs,
   ...
 }:
-let
-  oo7Pkgs = pkgs.extend (
-    _: prev: {
-      oo7-pam = prev.callPackage "${inputs.nixpkgs-unstable}/pkgs/by-name/oo/oo7-pam/package.nix" { };
-    }
-  );
-in
 {
   imports = [
     (import "${inputs.nixpkgs-unstable}/nixos/modules/services/desktops/oo7.nix" {
-      inherit config lib;
-      pkgs = oo7Pkgs;
+      inherit config lib pkgs;
     })
   ];
   options.security.pam.services = lib.mkOption {
@@ -46,17 +38,17 @@ in
               auth.oo7 = {
                 order = config.rules.auth.unix.order - 1;
                 control = "optional";
-                modulePath = "${oo7Pkgs.oo7-pam}/lib/security/pam_oo7.so";
+                modulePath = "${pkgs.oo7-pam}/lib/security/pam_oo7.so";
               };
               password.oo7 = {
                 order = config.rules.password.gnome_keyring.order + 1;
                 control = "optional";
-                modulePath = "${oo7Pkgs.oo7-pam}/lib/security/pam_oo7.so";
+                modulePath = "${pkgs.oo7-pam}/lib/security/pam_oo7.so";
               };
               session.oo7 = {
                 order = config.rules.session.gnome_keyring.order + 1;
                 control = "optional";
-                modulePath = "${oo7Pkgs.oo7-pam}/lib/security/pam_oo7.so";
+                modulePath = "${pkgs.oo7-pam}/lib/security/pam_oo7.so";
                 settings.auto_start = true;
               };
             };

@@ -190,6 +190,49 @@ delib.host {
             {
               assertion =
                 let
+                  pam = config.security.pam.services;
+                in
+                pam.login.rules.auth.oo7.settings.unlock
+                && pam.swaylock.oo7.enable
+                && pam.swaylock.rules.auth.oo7.settings.unlock
+                && pam.dankshell.rules.auth.oo7.settings.unlock
+                && osa.de.dms.settings.lockPamPath == "/etc/pam.d/dankshell"
+                && pam.passwd.oo7.enable
+                && pam.passwd.rules.password.unix.control == "requisite"
+                && pam.passwd.rules.password.oo7.order == pam.passwd.rules.password.unix.order + 1
+                &&
+                  lib.all
+                    (
+                      name:
+                      let
+                        service = pam.${name};
+                      in
+                      if service.rules.auth ? oo7 then
+                        service.rules.auth.oo7.control == "optional"
+                        && service.rules.session.oo7.control == "optional"
+                        && service.rules.auth.oo7.modulePath == pam.login.rules.auth.oo7.modulePath
+                      else
+                        service.rules.auth.login.control == "substack"
+                        && service.rules.auth.login.modulePath == "login"
+                        && service.rules.session.login.control == "include"
+                        && service.rules.session.login.modulePath == "login"
+                    )
+                    (
+                      [
+                        "login"
+                        "greetd"
+                        "dms-greeter"
+                        "dankshell"
+                        "swaylock"
+                        "passwd"
+                      ]
+                      ++ lib.optional config.services.displayManager.sddm.enable "sddm"
+                    );
+              message = "All enabled login, lock and password-change services must share the host's optional oo7 PAM module.";
+            }
+            {
+              assertion =
+                let
                   greetdPam = config.security.pam.services.greetd.text;
                   loginPam = config.security.pam.services.login.text;
                 in
