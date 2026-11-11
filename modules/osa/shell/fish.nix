@@ -18,6 +18,11 @@
             && lib.getName myconfig.osa.shell.fish.pkg == lib.getName myconfig.user.shell.default.pkg
           );
           osa.shell.fish.pkg = delib.packageOption pkgs.fish;
+          osa.shell.fish.indexDatabase = lib.mkOption {
+            type = lib.types.enum [ "full" "small" ];
+            default = "small";
+            description = "Which nix-index-database index to use for command-not-found.";
+          };
         };
 
         home.always.imports = [
@@ -51,6 +56,7 @@
           programs.nix-index = {
             enable = true;
             enableFishIntegration = true;
+            package = inputs.nix-index-database.packages.${pkgs.stdenv.hostPlatform.system}."nix-index-with-${myconfig.osa.shell.fish.indexDatabase}-db";
           };
         };
 
